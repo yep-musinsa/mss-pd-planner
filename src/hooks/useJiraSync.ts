@@ -99,7 +99,10 @@ export function buildAssigneeJql(members: Member[]): string {
 }
 
 // ── API 헬퍼 ──────────────────────────────────────────────────
-const API_BASE = '/jira-api/rest/api/3';
+const IS_PROD = window.location.hostname !== 'localhost';
+const API_BASE = IS_PROD
+  ? '/.netlify/functions/jira-proxy/rest/api/3'
+  : '/jira-api/rest/api/3';
 const DATE_FIELDS = ['summary', 'status', 'assignee', 'issuetype', 'parent',
   'duedate', ...START_FIELDS, ...END_FIELDS].join(',');
 
