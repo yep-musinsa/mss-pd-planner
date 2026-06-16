@@ -1,2 +1,0 @@
-/*
-  Content-Security-Policy: default-src 'self' 'unsafe-inline' 'unsafe-eval' https:; script-src 'self' 'unsafe-inline' 'unsafe-eval'; connect-src 'self' https:;
