@@ -99,10 +99,16 @@ export function buildAssigneeJql(members: Member[]): string {
 }
 
 // ── API 헬퍼 ──────────────────────────────────────────────────
-const IS_PROD = window.location.hostname !== 'localhost';
-const API_BASE = IS_PROD
-  ? '/.netlify/functions/jira-proxy/rest/api/3'
-  : '/jira-api/rest/api/3';
+// localhost: Vite proxy 사용 (CORS 우회)
+// 배포: 브라우저에서 직접 Jira 호출 (사내망에서 접근 가능)
+const IS_LOCAL = window.location.hostname === 'localhost';
+
+function getApiBase(baseUrl?: string): string {
+  if (IS_LOCAL) return '/jira-api/rest/api/3';
+  // baseUrl 예: "jira.team.musinsa.com" 또는 "jira.team.musinsa.com/"
+  const host = (baseUrl ?? 'jira.team.musinsa.com').replace(/\/$/, '');
+  return `https://${host}/rest/api/3`;
+}
 const DATE_FIELDS = ['summary', 'status', 'assignee', 'issuetype', 'parent',
   'duedate', ...START_FIELDS, ...END_FIELDS].join(',');
 
@@ -111,7 +117,9 @@ async function fetchAllIssues(
   fields: string,
   authHeader: string,
   onProgress?: (n: number) => void,
+  baseUrl?: string,
 ): Promise<JiraIssue[]> {
+  const API_BASE = getApiBase(baseUrl);
   const all: JiraIssue[] = [];
   let nextPageToken: string | undefined;
 
@@ -162,6 +170,7 @@ async function syncTiered(
     DATE_FIELDS,
     authHeader,
     n => setProgress(`Tier 1 — Initiative ${n}건 조회 중...`),
+    settings.baseUrl,
   );
   if (tier1Issues.length === 0) {
     throw new Error('Tier 1 JQL 결과가 없습니다. Initiative JQL을 확인해주세요.');
@@ -174,7 +183,7 @@ async function syncTiered(
   const tier2Issues: JiraIssue[] = [];
   for (const chunk of chunkKeys(tier1Keys)) {
     const jql2 = `parent in (${chunk.map(k => `"${k}"`).join(',')})`;
-    const issues = await fetchAllIssues(jql2, DATE_FIELDS, authHeader);
+    const issues = await fetchAllIssues(jql2, DATE_FIELDS, authHeader, undefined, settings.baseUrl);
     tier2Issues.push(...issues);
     setProgress(`Tier 2 — Epic ${tier2Issues.length}건 조회 중...`);
   }
@@ -216,6 +225,7 @@ async function syncTiered(
       DATE_FIELDS,
       authHeader,
       n => setProgress(`Tier 3 — Task ${fetched + n}건 조회 중...`),
+      settings.baseUrl,
     );
 
     for (const issue of issues) {
@@ -265,6 +275,7 @@ async function syncSimple(
   const issues = await fetchAllIssues(
     jql, DATE_FIELDS, authHeader,
     n => setProgress(`이슈 ${n}건 조회 중...`),
+    settings.baseUrl,
   );
 
   const items: GanttItem[] = [];
