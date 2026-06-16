@@ -8,7 +8,7 @@ export default defineConfig({
   server: {
     proxy: {
       '/jira-api': {
-        target: 'https://musinsa-oneteam.atlassian.net',
+        target: 'https://jira.team.musinsa.com',
         changeOrigin: true,
         rewrite: (path) => path.replace(/^\/jira-api/, ''),
         headers: { 'X-Atlassian-Token': 'no-check' },

@@ -9,7 +9,7 @@
 
 [[redirects]]
   from = "/jira-api/*"
-  to = "https://musinsa-oneteam.atlassian.net/:splat"
+  to = "https://jira.team.musinsa.com/:splat"
   status = 200
   force = true
   headers = {X-Atlassian-Token = "no-check"}
