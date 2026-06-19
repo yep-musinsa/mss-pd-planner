@@ -3,12 +3,12 @@ import react from '@vitejs/plugin-react'
 
 // https://vite.dev/config/
 export default defineConfig({
-  base: '/',
+  base: '/mss-pd-planner/',
   plugins: [react()],
   server: {
     proxy: {
       '/jira-api': {
-        target: 'https://jira.team.musinsa.com',
+        target: 'https://musinsa-oneteam.atlassian.net',
         changeOrigin: true,
         rewrite: (path) => path.replace(/^\/jira-api/, ''),
         headers: { 'X-Atlassian-Token': 'no-check' },

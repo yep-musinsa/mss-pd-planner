@@ -12,7 +12,9 @@ const MEMBER_ROW_H = 42;
 const BAR_H = 22;
 const RESIZE_HANDLE_W = 8;
 
-const LEFT_W       = 390;
+const LEFT_W_DEFAULT = 390;
+const LEFT_W_MIN     = 220;
+const LEFT_W_MAX     = 640;
 const COL_KEY_W    = 70;
 const COL_TYPE_W   = 64;
 const COL_STATUS_W = 78;
@@ -136,6 +138,30 @@ const GanttChart = forwardRef<GanttChartHandle, Props>(function GanttChart(
   const [dragState, setDragState] = useState<DragState | null>(null);
   const [dragDelta, setDragDelta] = useState(0);
   const [collapsed, setCollapsed] = useState<Set<string>>(new Set());
+  const [leftW, setLeftW] = useState(LEFT_W_DEFAULT);
+  const resizingRef = useRef(false);
+  const resizeStartX = useRef(0);
+  const resizeStartW = useRef(0);
+
+  const onResizeMouseDown = useCallback((e: React.MouseEvent) => {
+    e.preventDefault();
+    resizingRef.current = true;
+    resizeStartX.current = e.clientX;
+    resizeStartW.current = leftW;
+
+    const onMove = (ev: MouseEvent) => {
+      if (!resizingRef.current) return;
+      const delta = ev.clientX - resizeStartX.current;
+      setLeftW(Math.min(LEFT_W_MAX, Math.max(LEFT_W_MIN, resizeStartW.current + delta)));
+    };
+    const onUp = () => {
+      resizingRef.current = false;
+      window.removeEventListener('mousemove', onMove);
+      window.removeEventListener('mouseup', onUp);
+    };
+    window.addEventListener('mousemove', onMove);
+    window.addEventListener('mouseup', onUp);
+  }, [leftW]);
 
   function toggleCollapse(id: string) {
     setCollapsed(prev => {
@@ -262,13 +288,21 @@ const GanttChart = forwardRef<GanttChartHandle, Props>(function GanttChart(
       <div className="flex border-b border-gray-200 bg-gray-50 flex-shrink-0">
         {/* 왼쪽: 컬럼명 */}
         <div className="flex-shrink-0 border-r border-gray-200 flex flex-col justify-end"
-          style={{ width: LEFT_W, minHeight: 58 }}>
+          style={{ width: leftW, minHeight: 58 }}>
           <div className="flex items-center border-t border-gray-100 h-7 bg-gray-50 text-[10px] font-semibold text-gray-400 uppercase tracking-wide">
             <div style={{ width: COL_KEY_W }} className="px-2">KEY</div>
             <div style={{ width: COL_TYPE_W }} className="px-1">TYPE</div>
             <div className="flex-1 px-2">SUMMARY</div>
             <div style={{ width: COL_STATUS_W }} className="px-1 text-right pr-3">STATUS</div>
           </div>
+        </div>
+        {/* 리사이즈 핸들 */}
+        <div
+          onMouseDown={onResizeMouseDown}
+          className="flex-shrink-0 w-1.5 cursor-col-resize hover:bg-blue-400 transition-colors bg-transparent group relative z-10"
+          style={{ marginLeft: -3, marginRight: -3 }}
+        >
+          <div className="absolute inset-y-0 left-1/2 -translate-x-1/2 w-0.5 bg-gray-300 group-hover:bg-blue-400 transition-colors" />
         </div>
         {/* 오른쪽: 월/일 */}
         <div className="overflow-hidden flex-1" ref={headerScrollRef}
@@ -356,8 +390,8 @@ const GanttChart = forwardRef<GanttChartHandle, Props>(function GanttChart(
       <div className="flex" style={{ maxHeight: 'calc(100vh - 290px)' }}>
 
         {/* 왼쪽 고정 테이블 */}
-        <div ref={leftPanelRef} className="flex-shrink-0 border-r border-gray-200 overflow-y-auto"
-          style={{ width: LEFT_W }}
+        <div ref={leftPanelRef} className="flex-shrink-0 overflow-y-auto"
+          style={{ width: leftW }}
           onScroll={e => syncVertical('left', (e.target as HTMLDivElement).scrollTop)}>
 
           {sections.map(({ member, memberItems, height }) => {
@@ -443,6 +477,15 @@ const GanttChart = forwardRef<GanttChartHandle, Props>(function GanttChart(
             </div>
             );
           })}
+        </div>
+
+        {/* 리사이즈 핸들 (바디) */}
+        <div
+          onMouseDown={onResizeMouseDown}
+          className="flex-shrink-0 w-1.5 cursor-col-resize hover:bg-blue-400 transition-colors bg-transparent group relative z-10 border-r border-gray-200"
+          style={{ marginLeft: -3, marginRight: -3 }}
+        >
+          <div className="absolute inset-y-0 left-1/2 -translate-x-1/2 w-0.5 bg-gray-300 group-hover:bg-blue-400 transition-colors" />
         </div>
 
         {/* 오른쪽 타임라인 */}
