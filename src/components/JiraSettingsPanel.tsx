@@ -5,7 +5,7 @@ import { useJiraSync, buildAssigneeJql } from '../hooks/useJiraSync';
 
 const SETTINGS_KEY = 'pd-planner-jira-settings';
 
-const DEFAULT_TIER1_JQL = 'labels in ("PD") AND issuetype = "Initiative" AND "Year / Quarter" in ("2026-Q1", "2026-Q2", "2026-Q3", "2026-Q4")';
+const DEFAULT_TIER1_JQL = 'labels in ("PD") AND issuetype in ("Initiative", "Epic")';
 const DEFAULT_SIMPLE_JQL = 'customfield_10015 is not EMPTY AND duedate is not EMPTY AND duedate >= "2026-01-01" AND statusCategory != Done ORDER BY duedate ASC';
 
 export function loadJiraSettings(): JiraSettings {
@@ -14,8 +14,8 @@ export function loadJiraSettings(): JiraSettings {
     if (s) return JSON.parse(s);
   } catch { /* ignore */ }
   return {
-    baseUrl: 'musinsa-oneteam.atlassian.net',
-    email: '',
+    baseUrl: 'jira.team.musinsa.com',
+    email: 'ye.park@musinsa.com',
     apiToken: '',
     jql: DEFAULT_TIER1_JQL,
     syncMode: 'tiered',
@@ -34,7 +34,7 @@ interface Props {
 export default function JiraSettingsPanel({ members, onSyncComplete }: Props) {
   const [settings, setSettings] = useState<JiraSettings>(loadJiraSettings);
   // jira.team.musinsa.com = Jira Cloud → Basic Auth 기본값
-  const [authMode, setAuthMode] = useState<'pat' | 'basic'>('basic');
+  // authMode 고정: Basic Auth (email + API token);
   const [showToken, setShowToken] = useState(false);
   const [saved, setSaved] = useState(false);
   const { sync, loading, error, progress } = useJiraSync();
@@ -45,15 +45,14 @@ export default function JiraSettingsPanel({ members, onSyncComplete }: Props) {
   const missingMembers = members.filter(m => m.active && !m.jiraAccountId);
 
   function handleSave() {
-    const toSave = authMode === 'pat' ? { ...settings, email: '' } : settings;
-    saveJiraSettings(toSave);
+    saveJiraSettings(settings);
     setSaved(true);
     setTimeout(() => setSaved(false), 2000);
   }
 
   async function handleSync() {
-    const toSave = authMode === 'pat' ? { ...settings, email: '' } : settings;
-    saveJiraSettings(toSave);
+    saveJiraSettings(settings);
+    const toSave = settings;
     const items = await sync(toSave, members);
     if (items.length > 0) {
       const updated = { ...toSave, lastSynced: new Date().toISOString() };
@@ -70,7 +69,7 @@ export default function JiraSettingsPanel({ members, onSyncComplete }: Props) {
       <div>
         <h2 className="text-lg font-bold text-gray-900">Jira 연동 설정</h2>
         <p className="text-sm text-gray-500 mt-1">
-          <code className="bg-gray-100 px-1.5 py-0.5 rounded text-xs">musinsa-oneteam.atlassian.net</code> (Jira Cloud) 에 연결합니다.
+          <code className="bg-gray-100 px-1.5 py-0.5 rounded text-xs">jira.team.musinsa.com</code> 에 연결합니다.
           <strong>이메일 + API 토큰</strong> 방식을 사용합니다.{' '}
           <a href="https://id.atlassian.com/manage-profile/security/api-tokens"
             target="_blank" rel="noreferrer"
@@ -115,163 +114,37 @@ export default function JiraSettingsPanel({ members, onSyncComplete }: Props) {
       <div className="bg-white rounded-xl border border-gray-200 p-5 space-y-4">
         <h3 className="text-sm font-bold text-gray-700">연결 정보</h3>
 
-        {/* 도메인 */}
+
+        {/* API 토큰 */}
         <div>
-          <label className={labelCls}>Jira 도메인</label>
-          <div className="flex items-center gap-2">
-            <span className="text-sm text-gray-400 whitespace-nowrap">https://</span>
-            <input className={inputCls}
-              value={settings.baseUrl}
-              onChange={e => setSettings(s => ({ ...s, baseUrl: e.target.value }))} />
-          </div>
+          <label className={labelCls}>API 토큰</label>
+          <input className={inputCls}
+            type="password"
+            placeholder="ATATT3x..."
+            value={settings.apiToken}
+            onChange={e => setSettings(s => ({ ...s, apiToken: e.target.value, email: 'ye.park@musinsa.com' }))} />
         </div>
-
-        {/* 인증 방식 선택 */}
-        <div>
-          <label className={labelCls}>인증 방식</label>
-          <div className="flex gap-2">
-            {([
-              ['pat', 'PAT 토큰 (권장)', 'Jira Server/DC 8.14+, Personal Access Token'],
-              ['basic', 'Basic Auth', 'email + API 토큰 (Jira Cloud)'],
-            ] as const).map(([mode, title, desc]) => (
-              <button key={mode} type="button"
-                onClick={() => setAuthMode(mode)}
-                className={`flex-1 text-left px-3 py-2 rounded-lg border text-xs transition-all
-                  ${authMode === mode ? 'border-indigo-400 bg-indigo-50 text-indigo-700' : 'border-gray-200 text-gray-500 hover:border-gray-300'}`}>
-                <p className="font-semibold">{title}</p>
-                <p className="opacity-70 mt-0.5">{desc}</p>
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {/* PAT 모드 */}
-        {authMode === 'pat' && (
-          <div>
-            <label className={labelCls}>Personal Access Token</label>
-            <div className="relative">
-              <input className={`${inputCls} pr-9 font-mono text-xs`}
-                type={showToken ? 'text' : 'password'}
-                placeholder="Jira → 계정 → Personal Access Token에서 발급"
-                value={settings.apiToken}
-                onChange={e => setSettings(s => ({ ...s, apiToken: e.target.value }))} />
-              <button type="button"
-                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
-                onClick={() => setShowToken(v => !v)}>
-                {showToken ? <EyeOff size={14} /> : <Eye size={14} />}
-              </button>
-            </div>
-            <p className="text-xs text-gray-400 mt-1">
-              Jira 우측 상단 → 프로필 → <strong>Personal Access Tokens</strong> → 토큰 생성
-            </p>
-          </div>
-        )}
-
-        {/* Basic 모드 */}
-        {authMode === 'basic' && (
-          <div className="flex gap-3">
-            <div className="flex-1">
-              <label className={labelCls}>이메일</label>
-              <input className={inputCls} type="email"
-                placeholder="your@musinsa.com"
-                value={settings.email}
-                onChange={e => setSettings(s => ({ ...s, email: e.target.value }))} />
-            </div>
-            <div className="flex-1">
-              <label className={labelCls}>API 토큰</label>
-              <div className="relative">
-                <input className={`${inputCls} pr-9`}
-                  type={showToken ? 'text' : 'password'}
-                  placeholder="ATATT3x..."
-                  value={settings.apiToken}
-                  onChange={e => setSettings(s => ({ ...s, apiToken: e.target.value }))} />
-                <button type="button"
-                  className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
-                  onClick={() => setShowToken(v => !v)}>
-                  {showToken ? <EyeOff size={14} /> : <Eye size={14} />}
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
       </div>
 
       {/* JQL 모드 + 쿼리 */}
-      <div className="bg-white rounded-xl border border-gray-200 p-5 space-y-4">
-        <div className="flex items-center justify-between">
-          <h3 className="text-sm font-bold text-gray-700">동기화 방식</h3>
-        </div>
-
-        {/* 모드 토글 */}
-        <div className="flex gap-2">
-          {([
-            ['tiered', '3-Tier 계층 구조', 'Initiative → Epic → Task 계층으로 PD 프로젝트만 정확히 조회'],
-            ['simple', '직접 JQL', '직접 작성한 JQL로 조회 (담당자 조건 자동 추가)'],
-          ] as const).map(([mode, title, desc]) => (
-            <button key={mode} type="button"
-              onClick={() => setSettings(s => ({
-                ...s,
-                syncMode: mode,
-                jql: mode === 'tiered' ? DEFAULT_TIER1_JQL : DEFAULT_SIMPLE_JQL,
-              }))}
-              className={`flex-1 text-left px-3 py-2.5 rounded-lg border text-xs transition-all
-                ${(settings.syncMode ?? 'tiered') === mode
-                  ? 'border-indigo-400 bg-indigo-50 text-indigo-700'
-                  : 'border-gray-200 text-gray-500 hover:border-gray-300'}`}>
-              <p className="font-semibold">{title}</p>
-              <p className="opacity-70 mt-0.5 leading-relaxed">{desc}</p>
-            </button>
-          ))}
-        </div>
-
-        {/* Tiered 모드 */}
-        {(settings.syncMode ?? 'tiered') === 'tiered' && (
-          <div className="space-y-3">
-            <div>
-              <label className={labelCls}>
-                TIER 1 — INITIATIVE JQL
-                <span className="ml-1 font-normal text-gray-400">(직접 편집 가능)</span>
-              </label>
-              <textarea className={`${inputCls} font-mono text-xs resize-none`} rows={2}
-                value={settings.jql}
-                onChange={e => setSettings(s => ({ ...s, jql: e.target.value }))} />
-            </div>
-            <div className="bg-gray-50 rounded-lg p-3 space-y-2 text-xs text-gray-500">
-              <div>
-                <span className="font-semibold text-gray-600 block mb-0.5">TIER 2 — EPIC</span>
-                <code className="text-gray-400">parent in ({"<"}TIER1 KEYS{">"})</code>
-              </div>
-              <div>
-                <span className="font-semibold text-gray-600 block mb-0.5">TIER 3 — TASK (자동 생성)</span>
-                <code className="text-gray-400 break-all">
-                  parent in ({"<"}TIER2 KEYS{">"}) AND {assigneeJql ? assigneeJql.slice(0, 60) + '…' : 'assignee in (...)'}
-                  {' '}AND customfield_10015 is not EMPTY AND duedate is not EMPTY AND statusCategory != Done
-                </code>
-              </div>
-            </div>
+      <div className="bg-white rounded-xl border border-gray-200 p-5 space-y-3">
+        <h3 className="text-sm font-bold text-gray-700">동기화 방식</h3>
+        <div className="bg-gray-50 rounded-lg p-3 space-y-2 text-xs text-gray-500">
+          <div>
+            <span className="font-semibold text-gray-600 block mb-0.5">TIER 1 — INITIATIVE</span>
+            <code className="text-gray-400">{settings.jql}</code>
           </div>
-        )}
+          <div>
+            <span className="font-semibold text-gray-600 block mb-0.5">TIER 2 — EPIC</span>
+            <code className="text-gray-400">parent or Epic Link in (TIER1 KEYS)</code>
+          </div>
+          <div>
+            <span className="font-semibold text-gray-600 block mb-0.5">TIER 3 — TASK</span>
+            <code className="text-gray-400">parent or Epic Link in (TIER2 KEYS) AND assignee in (...)</code>
+          </div>
+        </div>
 
         {/* Simple 모드 */}
-        {settings.syncMode === 'simple' && (
-          <div className="space-y-3">
-            <div>
-              <label className={labelCls}>
-                JQL 쿼리
-                <span className="ml-1 font-normal text-gray-400">(담당자 조건 자동 추가)</span>
-              </label>
-              <textarea className={`${inputCls} font-mono text-xs resize-none`} rows={3}
-                value={settings.jql}
-                onChange={e => setSettings(s => ({ ...s, jql: e.target.value }))} />
-            </div>
-            <div className="bg-gray-50 rounded-lg px-3 py-2 text-xs text-gray-500">
-              <p className="font-semibold text-gray-600 mb-0.5">최종 실행 JQL</p>
-              <p className="font-mono text-gray-400 break-all">
-                ({settings.jql.slice(0, 80)}{settings.jql.length > 80 ? '…' : ''}) AND {assigneeJql || 'assignee in (...)'}
-              </p>
-            </div>
-          </div>
-        )}
       </div>
 
       {/* 상태 / 에러 */}

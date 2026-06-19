@@ -99,7 +99,11 @@ export function buildAssigneeJql(members: Member[]): string {
 }
 
 // ── API 헬퍼 ──────────────────────────────────────────────────
-const API_BASE = '/jira-api/rest/api/3';
+// localhost: Vite proxy 사용 / 배포: Jira Cloud 직접 호출 (CORS 지원)
+const IS_LOCAL = window.location.hostname === 'localhost';
+const API_BASE = IS_LOCAL
+  ? '/jira-api/rest/api/3'
+  : 'https://musinsa-oneteam.atlassian.net/rest/api/3';
 const DATE_FIELDS = ['summary', 'status', 'assignee', 'issuetype', 'parent',
   'duedate', ...START_FIELDS, ...END_FIELDS].join(',');
 
@@ -170,7 +174,8 @@ async function syncTiered(
   setProgress('Tier 2 — Epic 조회 중...');
   const tier2Issues: JiraIssue[] = [];
   for (const chunk of chunkKeys(tier1Keys)) {
-    const jql2 = `parent in (${chunk.map(k => `"${k}"`).join(',')})`;
+    const keys = chunk.map(k => `"${k}"`).join(',');
+    const jql2 = `parent in (${keys}) OR "Epic Link" in (${keys})`;
     const issues = await fetchAllIssues(jql2, DATE_FIELDS, authHeader);
     tier2Issues.push(...issues);
     setProgress(`Tier 2 — Epic ${tier2Issues.length}건 조회 중...`);
@@ -203,7 +208,8 @@ async function syncTiered(
   let fetched = 0;
 
   for (const chunk of chunkKeys(tier2Keys)) {
-    const parentClause = `parent in (${chunk.map(k => `"${k}"`).join(',')})`;
+    const keys = chunk.map(k => `"${k}"`).join(',');
+    const parentClause = `(parent in (${keys}) OR "Epic Link" in (${keys}))`;
     const jql3Parts = [parentClause];
     if (assigneeClause) jql3Parts.push(assigneeClause);
     const jql3 = jql3Parts.join(' AND ') + ' ORDER BY duedate ASC';
