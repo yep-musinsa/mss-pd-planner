@@ -99,11 +99,11 @@ export function buildAssigneeJql(members: Member[]): string {
 }
 
 // ── API 헬퍼 ──────────────────────────────────────────────────
-// localhost: Vite proxy 사용 / 배포: Jira Cloud 직접 호출 (CORS 지원)
+// localhost: Vite proxy 사용 / 배포: Cloudflare Worker 프록시
 const IS_LOCAL = window.location.hostname === 'localhost';
 const API_BASE = IS_LOCAL
   ? '/jira-api/rest/api/3'
-  : 'https://musinsa-oneteam.atlassian.net/rest/api/3';
+  : 'https://jira-proxy.ye-park.workers.dev/jira-proxy/rest/api/3';
 const DATE_FIELDS = ['summary', 'status', 'assignee', 'issuetype', 'parent',
   'duedate', ...START_FIELDS, ...END_FIELDS].join(',');
 
