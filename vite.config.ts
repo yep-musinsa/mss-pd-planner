@@ -3,7 +3,7 @@ import react from '@vitejs/plugin-react'
 
 // https://vite.dev/config/
 export default defineConfig({
-  base: '/cbd-pd-planner/',
+  base: '/mss-pd-planner/',
   plugins: [react()],
   server: {
     proxy: {
