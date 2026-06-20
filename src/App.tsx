@@ -6,7 +6,7 @@ import {
 import { ko } from 'date-fns/locale';
 import {
   Plus, LayoutDashboard, Calendar,
-  Users, Settings, ChevronDown, Check, X, RefreshCw,
+  Users, Settings, ChevronDown, Check, X, RefreshCw, LogOut,
 } from 'lucide-react';
 import type { GanttItem, Member, ViewMode, JiraSettings } from './types';
 import { MEMBERS, SAMPLE_ITEMS } from './data';
@@ -17,6 +17,8 @@ import ItemDetailPanel from './components/ItemDetailPanel';
 import MemberManager from './components/MemberManager';
 import JiraSettingsPanel, { loadJiraSettings } from './components/JiraSettingsPanel';
 import { useJiraSync } from './hooks/useJiraSync';
+import { useAuth } from './contexts/AuthContext';
+import LoginPage from './components/LoginPage';
 
 const ITEMS_KEY   = 'pd-planner-items';
 const MEMBERS_KEY = 'pd-planner-members';
@@ -177,6 +179,10 @@ function MultiSelect({
 
 // ── 메인 앱 ───────────────────────────────────────────────────
 export default function App() {
+  const { user, isAdmin, logout } = useAuth();
+
+  // 로그인 안 되어 있으면 로그인 페이지
+  if (!user) return <LoginPage />;
   const [items, setItems]     = useState<GanttItem[]>(loadItems);
   const [members, setMembers] = useState<Member[]>(loadMembers);
   const [view, setView]       = useState<ViewMode>('gantt');
@@ -307,7 +313,7 @@ export default function App() {
     { v: 'dashboard' as ViewMode, label: '리소스 요약', Icon: LayoutDashboard },
     { v: 'gantt'     as ViewMode, label: '타임라인',  Icon: Calendar },
     { v: 'members'   as ViewMode, label: '팀원',     Icon: Users },
-    { v: 'settings'  as ViewMode, label: 'Jira 설정', Icon: Settings },
+    ...(isAdmin ? [{ v: 'settings' as ViewMode, label: 'Jira 설정', Icon: Settings }] : []),
   ];
 
   const ZOOM_LABELS: Record<GanttZoom, string> = {
@@ -357,6 +363,20 @@ export default function App() {
             className="flex items-center gap-2 bg-indigo-500 text-white font-semibold px-4 hover:bg-indigo-600 transition-colors" style={{ borderRadius: 4, height: 36 }}>
             <Plus size={14} />예정 추가
           </button>
+
+          {/* 사용자 프로필 */}
+          <div className="flex items-center gap-2 ml-1 pl-3 border-l border-gray-200">
+            {user.picture
+              ? <img src={user.picture} className="w-7 h-7 rounded-full object-cover" />
+              : <div className="w-7 h-7 rounded-full bg-indigo-500 flex items-center justify-center text-white text-xs font-bold">{user.name[0]}</div>
+            }
+            <span className="text-xs text-gray-600 font-medium hidden sm:block">{user.name}</span>
+            <button onClick={logout}
+              title="로그아웃"
+              className="p-1.5 rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-100 transition-colors">
+              <LogOut size={14} />
+            </button>
+          </div>
         </div>
       </header>
 
