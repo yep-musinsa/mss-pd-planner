@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { X, ChevronDown } from 'lucide-react';
 import type { GanttItem, Member } from '../types';
+import { useAuth } from '../contexts/AuthContext';
 
 interface Props {
   members: Member[];
@@ -11,6 +12,7 @@ interface Props {
 }
 
 export default function AddPlanModal({ members, onClose, onSave, onDelete, editing }: Props) {
+  const { user } = useAuth();
   const activeMembers = members.filter(m => m.active);
   const [form, setForm] = useState({
     title: editing?.title ?? '',
@@ -18,7 +20,7 @@ export default function AddPlanModal({ members, onClose, onSave, onDelete, editi
     startDate: editing?.startDate ?? '',
     endDate: editing?.endDate ?? '',
     note: editing?.note ?? '',
-    registeredBy: editing?.registeredBy ?? '',
+    registeredBy: editing?.registeredBy ?? (user?.name ?? ''),
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [memberOpen, setMemberOpen] = useState(false);
@@ -169,8 +171,8 @@ export default function AddPlanModal({ members, onClose, onSave, onDelete, editi
           {/* 등록자 */}
           <div>
             <label className="block text-xs font-semibold text-gray-500 mb-1">등록자</label>
-            <div className="px-3 py-2 text-sm text-gray-500 bg-gray-50 border border-gray-200"
-              style={{ borderRadius: 4 }}>
+            <div className="px-3 py-2 text-sm bg-gray-50 border border-gray-200"
+              style={{ borderRadius: 4, color: form.registeredBy ? '#374151' : '#9ca3af' }}>
               {form.registeredBy || '로그인 사용자 자동 입력'}
             </div>
           </div>
