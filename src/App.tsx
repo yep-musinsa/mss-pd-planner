@@ -303,7 +303,8 @@ export default function App() {
   }
 
   async function handleSyncNow() {
-    if (!jiraSettings.apiToken) return;
+    // 로컬 개발 시에만 토큰 필수, 배포 환경은 Worker KV 토큰 사용
+    if (window.location.hostname === 'localhost' && !jiraSettings.apiToken) return;
     const synced = await jiraSync(jiraSettings, members);
     if (synced.length > 0) {
       const now = new Date().toISOString();
