@@ -9,7 +9,7 @@ import {
   Users, Settings, ChevronDown, Check, X, RefreshCw, LogOut,
 } from 'lucide-react';
 import type { GanttItem, Member, ViewMode, JiraSettings } from './types';
-import { MEMBERS, SAMPLE_ITEMS } from './data';
+import { MEMBERS } from './data';
 import GanttChart, { type GanttChartHandle } from './components/GanttChart';
 import Dashboard from './components/Dashboard';
 import AddPlanModal from './components/AddPlanModal';
@@ -23,9 +23,21 @@ import LoginPage from './components/LoginPage';
 const ITEMS_KEY   = 'pd-planner-items';
 const MEMBERS_KEY = 'pd-planner-members';
 
+const PLANNED_KEY = 'pd-planner-planned'; // 예정 항목 별도 저장
+
 function loadItems(): GanttItem[] {
-  try { const s = localStorage.getItem(ITEMS_KEY); if (s) return JSON.parse(s); } catch { /* ignore */ }
-  return SAMPLE_ITEMS;
+  // Jira 아이템 (sync 후 저장)
+  let jiraItems: GanttItem[] = [];
+  try { const s = localStorage.getItem(ITEMS_KEY); if (s) jiraItems = JSON.parse(s); } catch { /* ignore */ }
+  // 예정 항목 (별도 저장 - 리셋해도 유지)
+  let plannedItems: GanttItem[] = [];
+  try { const s = localStorage.getItem(PLANNED_KEY); if (s) plannedItems = JSON.parse(s); } catch { /* ignore */ }
+  return [...plannedItems, ...jiraItems];
+}
+
+function savePlannedItems(items: GanttItem[]) {
+  const planned = items.filter(i => i.type === 'planned');
+  localStorage.setItem(PLANNED_KEY, JSON.stringify(planned));
 }
 function saveItems(items: GanttItem[]) { localStorage.setItem(ITEMS_KEY, JSON.stringify(items)); }
 
@@ -257,17 +269,17 @@ export default function App() {
   /* ── 아이템 CRUD ── */
   function handleAddItem(item: Omit<GanttItem, 'id'>) {
     const newItems = [...items, { ...item, id: `u${nextId++}` }];
-    setItems(newItems); saveItems(newItems);
+    setItems(newItems); saveItems(newItems); savePlannedItems(newItems);
   }
   function handleEditItem(item: Omit<GanttItem, 'id'>) {
     if (!editingItem) return;
     const newItems = items.map(i => i.id === editingItem.id ? { ...item, id: editingItem.id } : i);
-    setItems(newItems); saveItems(newItems);
+    setItems(newItems); saveItems(newItems); savePlannedItems(newItems);
     setEditingItem(null);
   }
   function handleDeleteItem(id: string) {
     const newItems = items.filter(i => i.id !== id);
-    setItems(newItems); saveItems(newItems);
+    setItems(newItems); saveItems(newItems); savePlannedItems(newItems);
   }
 
   function handleUpdateDates(id: string, startDate: string, endDate: string) {
@@ -280,7 +292,9 @@ export default function App() {
   }
 
   function handleJiraSyncComplete(jiraItems: GanttItem[], updatedSettings?: JiraSettings) {
-    const planned = items.filter(i => i.type === 'planned');
+    // 예정 항목은 PLANNED_KEY에서 불러와서 유지
+    let planned: GanttItem[] = [];
+    try { const s = localStorage.getItem(PLANNED_KEY); if (s) planned = JSON.parse(s); } catch { /* ignore */ }
     const newItems = [...planned, ...jiraItems];
     setItems(newItems); saveItems(newItems);
     if (updatedSettings) setJiraSettings(updatedSettings);
@@ -351,7 +365,7 @@ export default function App() {
                 })}
               </span>
             )}
-            <button onClick={handleSyncNow} disabled={jiraSyncLoading}
+            <button onClick={handleSyncNow} disabled={jiraSyncLoading || (!jiraSettings.apiToken && window.location.hostname === 'localhost')}
               className="flex items-center gap-1.5 text-xs font-medium px-3 bg-gray-100 text-gray-600 hover:bg-gray-200 transition-colors disabled:opacity-50"
               style={{ borderRadius: 4, height: 36 }}>
               <RefreshCw size={12} className={jiraSyncLoading ? 'animate-spin' : ''} />
