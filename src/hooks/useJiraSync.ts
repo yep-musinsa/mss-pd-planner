@@ -214,6 +214,8 @@ async function syncTiered(
 
   const unassignedItems: GanttItem[] = [];
   for (const issue of tier1Issues) {
+    // Initiative 타입만 (Epic 등 미노출)
+    if (issue.fields.issuetype.name !== 'Initiative') continue;
     // PD 라벨 있는 것만
     const labels: string[] = (issue.fields.labels as string[] | undefined) ?? [];
     if (!labels.map((l: string) => l.toUpperCase()).includes('PD')) continue;
