@@ -171,33 +171,6 @@ async function syncTiered(
   const tier1Keys = tier1Issues.map(i => i.key);
   setProgress(`Tier 1 완료 — Initiative ${tier1Keys.length}건`);
 
-  // ── 미정 (PD 라벨 + 담당자 없는 Initiative) ──
-  const unassignedItems: GanttItem[] = [];
-  for (const issue of tier1Issues) {
-    const labels: string[] = (issue.fields.labels as string[] | undefined) ?? [];
-    if (!labels.map((l: string) => l.toUpperCase()).includes('PD')) continue;
-    const member = findMember(issue.fields.assignee, members);
-    if (member) continue; // 담당자 있으면 일반 렌더링에 맡김
-
-    const startDate = extractDate(issue.fields, START_FIELDS);
-    const endDate   = extractDate(issue.fields, END_FIELDS);
-    const today = new Date().toISOString().slice(0, 10);
-
-    unassignedItems.push({
-      id: `jira-${issue.key}`,
-      type: 'jira',
-      title: issue.fields.summary,
-      memberId: 'unassigned',
-      startDate: startDate || today,
-      endDate: endDate || today,
-      status: STATUS_MAP[issue.fields.status.name] ?? 'todo',
-      jiraKey: issue.key,
-      jiraUrl: `https://${settings.baseUrl}/browse/${issue.key}`,
-      issueType: issue.fields.issuetype.name,
-      noDates: !startDate || !endDate,
-    });
-  }
-
   // ── Tier 2: Epic (full fields for display) ──
   setProgress('Tier 2 — Epic 조회 중...');
   const tier2Issues: JiraIssue[] = [];
@@ -229,6 +202,42 @@ async function syncTiered(
     return item ? [item] : [];
   });
   setProgress(`Tier 2 완료 — Epic ${tier2Keys.length}건 (팀 배정: ${tier2Items.length}건)`);
+
+  // ── 미정 (PD 라벨 + 담당자 없는 Initiative) ──
+  // 단, 하위에 "PD"로 시작하는 Epic이 있는 Initiative는 제외
+  const initiativesWithPdEpic = new Set<string>();
+  for (const epic of tier2Issues) {
+    if (!epic.fields.summary.trim().toUpperCase().startsWith('PD')) continue;
+    const parentKey = (epic.fields.parent as { key?: string } | undefined)?.key;
+    if (parentKey) initiativesWithPdEpic.add(parentKey);
+  }
+
+  const unassignedItems: GanttItem[] = [];
+  for (const issue of tier1Issues) {
+    const labels: string[] = (issue.fields.labels as string[] | undefined) ?? [];
+    if (!labels.map((l: string) => l.toUpperCase()).includes('PD')) continue;
+    const member = findMember(issue.fields.assignee, members);
+    if (member) continue; // 담당자 있으면 일반 렌더링에 맡김
+    if (initiativesWithPdEpic.has(issue.key)) continue; // PD Epic 하위에 있으면 제외
+
+    const startDate = extractDate(issue.fields, START_FIELDS);
+    const endDate   = extractDate(issue.fields, END_FIELDS);
+    const today = new Date().toISOString().slice(0, 10);
+
+    unassignedItems.push({
+      id: `jira-${issue.key}`,
+      type: 'jira',
+      title: issue.fields.summary,
+      memberId: 'unassigned',
+      startDate: startDate || today,
+      endDate: endDate || today,
+      status: STATUS_MAP[issue.fields.status.name] ?? 'todo',
+      jiraKey: issue.key,
+      jiraUrl: `https://${settings.baseUrl}/browse/${issue.key}`,
+      issueType: issue.fields.issuetype.name,
+      noDates: !startDate || !endDate,
+    });
+  }
 
   // ── Tier 3: Task (날짜 없는 것도 포함) ──
   setProgress('Tier 3 — Task 조회 중...');
