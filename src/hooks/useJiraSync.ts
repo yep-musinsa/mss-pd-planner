@@ -194,11 +194,11 @@ async function syncTiered(
   const initiativeMap: Record<string, string> = {};
   tier1Issues.forEach(i => { initiativeMap[i.key] = i.fields.summary; });
 
-  // Tier2 → GanttItems (팀원 배정된 것만)
+  // Tier2 → GanttItems (담당자 있으면 날짜 없어도 포함)
   const tier2Items = tier2Issues.flatMap(i => {
     const parentKey = (i.fields.parent as { key?: string } | undefined)?.key;
     const epicName = parentKey ? initiativeMap[parentKey] : undefined;
-    const item = issueToItem(i, members, settings.baseUrl, epicName);
+    const item = issueToItem(i, members, settings.baseUrl, epicName, true);
     return item ? [item] : [];
   });
   setProgress(`Tier 2 완료 — Epic ${tier2Keys.length}건 (팀 배정: ${tier2Items.length}건)`);
