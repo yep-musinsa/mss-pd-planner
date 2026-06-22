@@ -153,7 +153,7 @@ const STATUS_LABEL: Record<GanttItem['status'], string> = {
 
 const Q_LABEL = ['Q1', 'Q2', 'Q3', 'Q4'];
 
-type ListFilter = null | 'overdue' | 'nodate' | 'planned';
+type ListFilterKey = 'overdue' | 'nodate' | 'planned';
 
 export default function Dashboard({ items, members, jiraSettings, onSync, syncLoading, onReorderMembers }: Props) {
   const activeMembers = members.filter(m => m.active);
@@ -165,7 +165,7 @@ export default function Dashboard({ items, members, jiraSettings, onSync, syncLo
   const defaultQ = quarters.includes(currentQuarter) ? currentQuarter : quarters[0];
   const [selectedQ, setSelectedQ] = useState<string>(defaultQ);
   const [selectedMemberId, setSelectedMemberId] = useState<string | null>(null);
-  const [listFilter, setListFilter] = useState<ListFilter>(null);
+  const [listFilters, setListFilters] = useState<ListFilterKey[]>([]);
   const [filterStatuses, setFilterStatuses] = useState<GanttItem['status'][]>(['todo', 'in_progress']);
 
   // 일정 초과: 미완료인데 endDate가 오늘 이전
@@ -224,9 +224,14 @@ export default function Dashboard({ items, members, jiraSettings, onSync, syncLo
 
   // 태스크 리스트에 표시할 아이템
   const listItems = useMemo(() => {
-    if (listFilter === 'overdue') return overdueItems;
-    if (listFilter === 'nodate') return noDatesItems;
-    if (listFilter === 'planned') return plannedItems;
+    if (listFilters.length > 0) {
+      const result: GanttItem[] = [];
+      const seen = new Set<string>();
+      if (listFilters.includes('overdue')) overdueItems.forEach(i => { if (!seen.has(i.id)) { seen.add(i.id); result.push(i); } });
+      if (listFilters.includes('nodate'))  noDatesItems.forEach(i => { if (!seen.has(i.id)) { seen.add(i.id); result.push(i); } });
+      if (listFilters.includes('planned')) plannedItems.forEach(i => { if (!seen.has(i.id)) { seen.add(i.id); result.push(i); } });
+      return result;
+    }
 
     let base = selectedMemberId
       ? items.filter(i => i.memberId === selectedMemberId)
@@ -239,16 +244,16 @@ export default function Dashboard({ items, members, jiraSettings, onSync, syncLo
       base = base.filter(i => i.noDates || filterStatuses.includes(i.status));
     }
     return base;
-  }, [listFilter, overdueItems, noDatesItems, plannedItems, selectedMemberId, items, selectedQ, filterStatuses]);
+  }, [listFilters, overdueItems, noDatesItems, plannedItems, selectedMemberId, items, selectedQ, filterStatuses]);
 
   const selectedMember = activeMembers.find(m => m.id === selectedMemberId) ?? null;
 
-  function toggleBadge(f: ListFilter) {
-    setListFilter(prev => prev === f ? null : f);
+  function toggleBadge(f: ListFilterKey) {
+    setListFilters(prev => prev.includes(f) ? prev.filter(x => x !== f) : [...prev, f]);
     setSelectedMemberId(null);
   }
   function handleMemberClick(id: string) {
-    setListFilter(null);
+    setListFilters([]);
     setSelectedMemberId(prev => prev === id ? null : id);
   }
 
@@ -441,40 +446,40 @@ export default function Dashboard({ items, members, jiraSettings, onSync, syncLo
           {overdueItems.length > 0 && (
             <button onClick={() => toggleBadge('overdue')}
               className={`flex items-center gap-1.5 text-xs font-semibold px-3 transition-all
-                ${listFilter === 'overdue'
+                ${listFilters.includes('overdue')
                   ? 'bg-red-500 text-white border border-red-500 shadow-sm'
                   : 'bg-white text-red-500 border border-red-200 hover:border-red-400 hover:bg-red-50'}`}
               style={{ borderRadius: 6, height: 28 }}>
               <AlertTriangle size={10} />
               일정 초과 {overdueItems.length}건
-              {listFilter === 'overdue' && <span className="ml-0.5 opacity-80">✕</span>}
+              {listFilters.includes('overdue') && <span className="ml-0.5 opacity-80">✕</span>}
             </button>
           )}
           {noDatesItems.length > 0 && (
             <button onClick={() => toggleBadge('nodate')}
               className={`flex items-center gap-1.5 text-xs font-semibold px-3 transition-all
-                ${listFilter === 'nodate'
+                ${listFilters.includes('nodate')
                   ? 'bg-amber-400 text-white border border-amber-400 shadow-sm'
                   : 'bg-white text-amber-500 border border-amber-200 hover:border-amber-400 hover:bg-amber-50'}`}
               style={{ borderRadius: 6, height: 28 }}>
               <AlertTriangle size={10} />
               일정 미기입 {noDatesItems.length}건
-              {listFilter === 'nodate' && <span className="ml-0.5 opacity-80">✕</span>}
+              {listFilters.includes('nodate') && <span className="ml-0.5 opacity-80">✕</span>}
             </button>
           )}
           {plannedItems.length > 0 && (
             <button onClick={() => toggleBadge('planned')}
               className={`flex items-center gap-1.5 text-xs font-semibold px-3 transition-all
-                ${listFilter === 'planned'
+                ${listFilters.includes('planned')
                   ? 'bg-cyan-500 text-white border border-cyan-500 shadow-sm'
                   : 'bg-white text-cyan-600 border border-cyan-200 hover:border-cyan-400 hover:bg-cyan-50'}`}
               style={{ borderRadius: 6, height: 28 }}>
               ✦ 예정 {plannedItems.length}건
-              {listFilter === 'planned' && <span className="ml-0.5 opacity-80">✕</span>}
+              {listFilters.includes('planned') && <span className="ml-0.5 opacity-80">✕</span>}
             </button>
           )}
-          {(listFilter || selectedMemberId) && (
-            <button onClick={() => { setListFilter(null); setSelectedMemberId(null); }}
+          {(listFilters.length > 0 || selectedMemberId) && (
+            <button onClick={() => { setListFilters([]); setSelectedMemberId(null); }}
               className="ml-auto text-xs text-gray-400 hover:text-gray-600 px-2 py-1 hover:bg-gray-100 transition-colors"
               style={{ borderRadius: 4 }}>
               전체 보기
