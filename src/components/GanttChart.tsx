@@ -266,7 +266,7 @@ const GanttChart = forwardRef<GanttChartHandle, Props>(function GanttChart(
     const unassigned = items.filter(i => i.memberId === 'unassigned' || !i.memberId);
     if (unassigned.length > 0) {
       result.push({
-        member: { id: 'unassigned', name: '담당자 미정', color: '#94a3b8', email: '', active: true },
+        member: { id: 'unassigned', name: '미정', color: '#94a3b8', email: '', active: true },
         memberItems: unassigned,
         height: MEMBER_ROW_H + unassigned.length * ROW_H,
       });
