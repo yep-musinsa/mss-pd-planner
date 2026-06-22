@@ -440,26 +440,37 @@ export default function Dashboard({ items, members, jiraSettings, onSync, syncLo
         <div className="flex items-center gap-2 -mt-2">
           {overdueItems.length > 0 && (
             <button onClick={() => toggleBadge('overdue')}
-              className={`flex items-center gap-1 text-xs font-medium px-3 transition-colors
-                ${listFilter === 'overdue' ? 'bg-red-100 text-red-700 border border-red-300' : 'bg-red-50 text-red-500 border border-red-200 hover:border-red-300'}`}
-              style={{ borderRadius: 4, height: 28 }}>
-              <AlertTriangle size={10} />일정 초과 {overdueItems.length}건
+              className={`flex items-center gap-1.5 text-xs font-semibold px-3 transition-all
+                ${listFilter === 'overdue'
+                  ? 'bg-red-500 text-white border border-red-500 shadow-sm'
+                  : 'bg-white text-red-500 border border-red-200 hover:border-red-400 hover:bg-red-50'}`}
+              style={{ borderRadius: 6, height: 28 }}>
+              <AlertTriangle size={10} />
+              일정 초과 {overdueItems.length}건
+              {listFilter === 'overdue' && <span className="ml-0.5 opacity-80">✕</span>}
             </button>
           )}
           {noDatesItems.length > 0 && (
             <button onClick={() => toggleBadge('nodate')}
-              className={`flex items-center gap-1 text-xs font-medium px-3 transition-colors
-                ${listFilter === 'nodate' ? 'bg-amber-100 text-amber-700 border border-amber-300' : 'bg-amber-50 text-amber-500 border border-amber-200 hover:border-amber-300'}`}
-              style={{ borderRadius: 4, height: 28 }}>
-              <AlertTriangle size={10} />일정 미기입 {noDatesItems.length}건
+              className={`flex items-center gap-1.5 text-xs font-semibold px-3 transition-all
+                ${listFilter === 'nodate'
+                  ? 'bg-amber-400 text-white border border-amber-400 shadow-sm'
+                  : 'bg-white text-amber-500 border border-amber-200 hover:border-amber-400 hover:bg-amber-50'}`}
+              style={{ borderRadius: 6, height: 28 }}>
+              <AlertTriangle size={10} />
+              일정 미기입 {noDatesItems.length}건
+              {listFilter === 'nodate' && <span className="ml-0.5 opacity-80">✕</span>}
             </button>
           )}
           {plannedItems.length > 0 && (
             <button onClick={() => toggleBadge('planned')}
-              className={`flex items-center gap-1 text-xs font-medium px-3 transition-colors
-                ${listFilter === 'planned' ? 'bg-cyan-100 text-cyan-700 border border-cyan-300' : 'bg-cyan-50 text-cyan-500 border border-cyan-200 hover:border-cyan-300'}`}
-              style={{ borderRadius: 4, height: 28 }}>
+              className={`flex items-center gap-1.5 text-xs font-semibold px-3 transition-all
+                ${listFilter === 'planned'
+                  ? 'bg-cyan-500 text-white border border-cyan-500 shadow-sm'
+                  : 'bg-white text-cyan-600 border border-cyan-200 hover:border-cyan-400 hover:bg-cyan-50'}`}
+              style={{ borderRadius: 6, height: 28 }}>
               ✦ 예정 {plannedItems.length}건
+              {listFilter === 'planned' && <span className="ml-0.5 opacity-80">✕</span>}
             </button>
           )}
           {(listFilter || selectedMemberId) && (
