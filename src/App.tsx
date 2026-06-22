@@ -25,9 +25,15 @@ const ITEMS_KEY   = 'pd-planner-items';
 const MEMBERS_KEY = 'pd-planner-members';
 
 function loadJiraItems(): GanttItem[] {
-  try { const s = localStorage.getItem(ITEMS_KEY); if (s) return JSON.parse(s); } catch { /* ignore */ }
+  try {
+    const s = localStorage.getItem(ITEMS_KEY);
+    if (s) return (JSON.parse(s) as GanttItem[]).filter(i => i.type === 'jira');
+  } catch { /* ignore */ }
   return [];
 }
+
+// 구버전 localStorage 예정 항목 정리
+try { localStorage.removeItem('pd-planner-planned'); } catch { /* ignore */ }
 function saveItems(items: GanttItem[]) {
   // Jira 아이템만 localStorage에 캐시
   const jira = items.filter(i => i.type === 'jira');
