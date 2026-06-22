@@ -336,6 +336,24 @@ function AppInner({ isAdmin, logout }: { isAdmin: boolean; logout: () => void })
     }
   }
 
+  // 앱 로드 시 자동 동기화 + 1시간마다 주기적 동기화
+  useEffect(() => {
+    const IS_LOCAL = window.location.hostname === 'localhost';
+    if (IS_LOCAL && !jiraSettings.apiToken) return;
+
+    // 앱 열릴 때 바로 동기화 (3초 딜레이 - 앱 렌더링 후)
+    const initialTimer = setTimeout(() => { handleSyncNow(); }, 3000);
+
+    // 1시간마다 자동 동기화
+    const interval = setInterval(() => { handleSyncNow(); }, 60 * 60 * 1000);
+
+    return () => {
+      clearTimeout(initialTimer);
+      clearInterval(interval);
+    };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   // Today 클릭: 뷰 센터를 오늘로 + 타임라인 스크롤
   function handleToday() {
     setViewCenter(new Date());
