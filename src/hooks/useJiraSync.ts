@@ -289,10 +289,12 @@ export function useJiraSync() {
     setError(null);
     setProgress('Jira 연결 중...');
 
+    // 배포 환경: Worker KV 토큰 사용 → auth header 불필요
+    // 로컬 개발: Vite proxy 통해 직접 인증
     const isPAT = !settings.email;
-    const authHeader = isPAT
-      ? `Bearer ${settings.apiToken}`
-      : `Basic ${btoa(`${settings.email}:${settings.apiToken}`)}`;
+    const authHeader = IS_LOCAL
+      ? (isPAT ? `Bearer ${settings.apiToken}` : `Basic ${btoa(`${settings.email}:${settings.apiToken}`)}`)
+      : '';
 
     try {
       let items: GanttItem[];
