@@ -39,13 +39,13 @@ export default function LoginPage() {
         callback: (response: GoogleCredentialResponse) => {
           const payload = parseJwt(response.credential);
 
-          if (!payload.email?.endsWith('@musinsa.com')) {
-            alert('무신사 계정(@musinsa.com)으로만 접근 가능합니다.');
+          const allowed = payload.email?.endsWith('@musinsa.com') || payload.email?.endsWith('@29cm.co.kr');
+          if (!allowed) {
+            alert('무신사(@musinsa.com) 또는 29CM(@29cm.co.kr) 계정으로만 접근 가능합니다.');
             return;
           }
           login({ email: payload.email, name: payload.name, picture: payload.picture });
         },
-        hosted_domain: 'musinsa.com',
       });
 
       if (btnRef.current) {
@@ -80,7 +80,7 @@ export default function LoginPage() {
             <span className="text-white font-bold text-2xl">C</span>
           </div>
           <h1 className="text-xl font-bold text-gray-900">CBD 리소스 관리</h1>
-          <p className="text-sm text-gray-500">무신사 계정으로 로그인하세요</p>
+          <p className="text-sm text-gray-500">무신사 / 29CM 계정으로 로그인하세요</p>
         </div>
 
         {/* Google 로그인 버튼 (GSI 렌더링) */}
@@ -89,7 +89,7 @@ export default function LoginPage() {
         </div>
 
         <p className="text-xs text-gray-400">
-          @musinsa.com 계정만 접근 가능합니다
+          @musinsa.com / @29cm.co.kr 계정만 접근 가능합니다
         </p>
       </div>
     </div>
