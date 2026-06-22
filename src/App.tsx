@@ -19,27 +19,20 @@ import JiraSettingsPanel, { loadJiraSettings } from './components/JiraSettingsPa
 import { useJiraSync } from './hooks/useJiraSync';
 import { useAuth } from './contexts/AuthContext';
 import LoginPage from './components/LoginPage';
+import { usePlannedItems } from './hooks/usePlannedItems';
 
 const ITEMS_KEY   = 'pd-planner-items';
 const MEMBERS_KEY = 'pd-planner-members';
 
-const PLANNED_KEY = 'pd-planner-planned'; // 예정 항목 별도 저장
-
-function loadItems(): GanttItem[] {
-  // Jira 아이템 (sync 후 저장)
-  let jiraItems: GanttItem[] = [];
-  try { const s = localStorage.getItem(ITEMS_KEY); if (s) jiraItems = JSON.parse(s); } catch { /* ignore */ }
-  // 예정 항목 (별도 저장 - 리셋해도 유지)
-  let plannedItems: GanttItem[] = [];
-  try { const s = localStorage.getItem(PLANNED_KEY); if (s) plannedItems = JSON.parse(s); } catch { /* ignore */ }
-  return [...plannedItems, ...jiraItems];
+function loadJiraItems(): GanttItem[] {
+  try { const s = localStorage.getItem(ITEMS_KEY); if (s) return JSON.parse(s); } catch { /* ignore */ }
+  return [];
 }
-
-function savePlannedItems(items: GanttItem[]) {
-  const planned = items.filter(i => i.type === 'planned');
-  localStorage.setItem(PLANNED_KEY, JSON.stringify(planned));
+function saveItems(items: GanttItem[]) {
+  // Jira 아이템만 localStorage에 캐시
+  const jira = items.filter(i => i.type === 'jira');
+  localStorage.setItem(ITEMS_KEY, JSON.stringify(jira));
 }
-function saveItems(items: GanttItem[]) { localStorage.setItem(ITEMS_KEY, JSON.stringify(items)); }
 
 function loadMembers(): Member[] {
   try { const s = localStorage.getItem(MEMBERS_KEY); if (s) return JSON.parse(s); } catch { /* ignore */ }
@@ -195,7 +188,18 @@ export default function App() {
 
   // 로그인 안 되어 있으면 로그인 페이지
   if (!user) return <LoginPage />;
-  const [items, setItems]     = useState<GanttItem[]>(loadItems);
+  // eslint-disable-next-line react-hooks/rules-of-hooks
+  return <AppInner isAdmin={isAdmin} logout={logout} />;
+}
+
+import type { AuthUser } from './contexts/AuthContext';
+
+function AppInner({ isAdmin, logout }: { isAdmin: boolean; logout: () => void }) {
+  const { user } = useAuth();
+  if (!user) return null;
+  const [jiraItems, setJiraItems] = useState<GanttItem[]>(loadJiraItems);
+  const { plannedItems, updatePlanned } = usePlannedItems();
+  const items = useMemo(() => [...plannedItems, ...jiraItems], [plannedItems, jiraItems]);
   const [members, setMembers] = useState<Member[]>(loadMembers);
   const [view, setView]       = useState<ViewMode>('gantt');
   const [ganttZoom, setGanttZoom] = useState<GanttZoom>('month');
@@ -268,35 +272,44 @@ export default function App() {
 
   /* ── 아이템 CRUD ── */
   function handleAddItem(item: Omit<GanttItem, 'id'>) {
-    const newItems = [...items, { ...item, id: `u${nextId++}` }];
-    setItems(newItems); saveItems(newItems); savePlannedItems(newItems);
+    const newItem = { ...item, id: `u${nextId++}` };
+    updatePlanned([...plannedItems, newItem]);
   }
   function handleEditItem(item: Omit<GanttItem, 'id'>) {
     if (!editingItem) return;
-    const newItems = items.map(i => i.id === editingItem.id ? { ...item, id: editingItem.id } : i);
-    setItems(newItems); saveItems(newItems); savePlannedItems(newItems);
+    if (editingItem.type === 'planned') {
+      const updated = plannedItems.map(i => i.id === editingItem.id ? { ...item, id: editingItem.id } : i);
+      updatePlanned(updated);
+    } else {
+      const updated = jiraItems.map(i => i.id === editingItem.id ? { ...item, id: editingItem.id } : i);
+      setJiraItems(updated); saveItems(updated);
+    }
     setEditingItem(null);
   }
   function handleDeleteItem(id: string) {
-    const newItems = items.filter(i => i.id !== id);
-    setItems(newItems); saveItems(newItems); savePlannedItems(newItems);
+    if (plannedItems.some(i => i.id === id)) {
+      updatePlanned(plannedItems.filter(i => i.id !== id));
+    } else {
+      const updated = jiraItems.filter(i => i.id !== id);
+      setJiraItems(updated); saveItems(updated);
+    }
   }
 
   function handleUpdateDates(id: string, startDate: string, endDate: string) {
-    const newItems = items.map(i => i.id === id ? { ...i, startDate, endDate } : i);
-    setItems(newItems); saveItems(newItems);
+    if (plannedItems.some(i => i.id === id)) {
+      updatePlanned(plannedItems.map(i => i.id === id ? { ...i, startDate, endDate } : i));
+    } else {
+      const updated = jiraItems.map(i => i.id === id ? { ...i, startDate, endDate } : i);
+      setJiraItems(updated); saveItems(updated);
+    }
   }
 
   function handleMembersChange(newMembers: Member[]) {
     setMembers(newMembers); saveMembers(newMembers);
   }
 
-  function handleJiraSyncComplete(jiraItems: GanttItem[], updatedSettings?: JiraSettings) {
-    // 예정 항목은 PLANNED_KEY에서 불러와서 유지
-    let planned: GanttItem[] = [];
-    try { const s = localStorage.getItem(PLANNED_KEY); if (s) planned = JSON.parse(s); } catch { /* ignore */ }
-    const newItems = [...planned, ...jiraItems];
-    setItems(newItems); saveItems(newItems);
+  function handleJiraSyncComplete(newJiraItems: GanttItem[], updatedSettings?: JiraSettings) {
+    setJiraItems(newJiraItems); saveItems(newJiraItems);
     if (updatedSettings) setJiraSettings(updatedSettings);
     setSyncFlash(true);
     setTimeout(() => setSyncFlash(false), 2000);
@@ -321,8 +334,8 @@ export default function App() {
     setTimeout(() => ganttRef.current?.scrollToToday(), 80);
   }
 
-  const plannedCount = items.filter(i => i.type === 'planned').length;
-  const jiraCount    = items.filter(i => i.type === 'jira').length;
+  const plannedCount = plannedItems.length;
+  const jiraCount    = jiraItems.length;
 
   const NAV_ITEMS = [
     { v: 'dashboard' as ViewMode, label: '리소스 요약', Icon: LayoutDashboard },
@@ -516,7 +529,7 @@ export default function App() {
         <ItemDetailPanel
           item={selectedItem}
           member={members.find(m => m.id === selectedItem.memberId)}
-          memberItems={items.filter(i => i.memberId === selectedItem.memberId)}
+          memberItems={[...plannedItems, ...jiraItems].filter(i => i.memberId === selectedItem.memberId)}
           onClose={() => setSelectedItem(null)}
           onEdit={() => {
             if (selectedItem.type === 'planned') {

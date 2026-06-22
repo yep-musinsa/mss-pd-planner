@@ -1,24 +1,21 @@
-// Cloudflare Worker - Jira CORS Proxy with KV token storage
-// KV binding 이름: PD_KV (Cloudflare 대시보드에서 설정 필요)
+// Cloudflare Worker - Jira CORS Proxy + Shared Planned Items
+// KV binding: PD_KV
 
 const CORS_HEADERS = {
   'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'Authorization, Content-Type, Accept, X-PD-Admin',
-  'Access-Control-Allow-Methods': 'GET, POST, PUT, OPTIONS',
+  'Access-Control-Allow-Headers': 'Authorization, Content-Type, Accept',
+  'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
 };
 
 export default {
   async fetch(request, env) {
-    // CORS preflight
     if (request.method === 'OPTIONS') {
       return new Response(null, { status: 204, headers: CORS_HEADERS });
     }
 
     const url = new URL(request.url);
 
-    // ── 관리자 토큰 저장 엔드포인트 ──
-    // POST /jira-proxy/admin/save-token
-    // Body: { email: "...", token: "..." }
+    // ── 관리자 토큰 저장 ──
     if (url.pathname === '/jira-proxy/admin/save-token' && request.method === 'POST') {
       try {
         const body = await request.json();
@@ -29,14 +26,12 @@ export default {
         });
       } catch (e) {
         return new Response(JSON.stringify({ ok: false, error: String(e) }), {
-          status: 500,
-          headers: { ...CORS_HEADERS, 'Content-Type': 'application/json' },
+          status: 500, headers: { ...CORS_HEADERS, 'Content-Type': 'application/json' },
         });
       }
     }
 
     // ── 토큰 설정 여부 확인 ──
-    // GET /jira-proxy/admin/token-status
     if (url.pathname === '/jira-proxy/admin/token-status' && request.method === 'GET') {
       const token = await env.PD_KV.get('jira_token');
       return new Response(JSON.stringify({ configured: !!token }), {
@@ -44,17 +39,37 @@ export default {
       });
     }
 
+    // ── 예정 업무 조회 ──
+    if (url.pathname === '/jira-proxy/planned' && request.method === 'GET') {
+      const data = await env.PD_KV.get('planned_items');
+      const items = data ? JSON.parse(data) : [];
+      return new Response(JSON.stringify(items), {
+        headers: { ...CORS_HEADERS, 'Content-Type': 'application/json' },
+      });
+    }
+
+    // ── 예정 업무 저장 (전체 교체) ──
+    if (url.pathname === '/jira-proxy/planned' && request.method === 'POST') {
+      try {
+        const items = await request.json();
+        await env.PD_KV.put('planned_items', JSON.stringify(items));
+        return new Response(JSON.stringify({ ok: true }), {
+          headers: { ...CORS_HEADERS, 'Content-Type': 'application/json' },
+        });
+      } catch (e) {
+        return new Response(JSON.stringify({ ok: false, error: String(e) }), {
+          status: 500, headers: { ...CORS_HEADERS, 'Content-Type': 'application/json' },
+        });
+      }
+    }
+
     // ── Jira API 프록시 ──
-    // KV에 저장된 토큰 사용, 없으면 요청 헤더에서 가져옴
     const storedEmail = await env.PD_KV.get('jira_email');
     const storedToken = await env.PD_KV.get('jira_token');
 
-    let authHeader;
-    if (storedEmail && storedToken) {
-      authHeader = 'Basic ' + btoa(storedEmail + ':' + storedToken);
-    } else {
-      authHeader = request.headers.get('Authorization') || '';
-    }
+    const authHeader = (storedEmail && storedToken)
+      ? 'Basic ' + btoa(storedEmail + ':' + storedToken)
+      : request.headers.get('Authorization') || '';
 
     const target = 'https://musinsa-oneteam.atlassian.net'
       + url.pathname.replace('/jira-proxy', '')
