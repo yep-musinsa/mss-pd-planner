@@ -37,7 +37,14 @@ export function usePlannedItems() {
 
   useEffect(() => {
     fetchPlanned().then(items => {
-      setPlannedItems(items);
+      // 중복 ID 제거 (여러 사용자가 같은 ID로 추가했을 경우 대비)
+      const seen = new Set<string>();
+      const deduped = items.filter(i => {
+        if (seen.has(i.id)) return false;
+        seen.add(i.id);
+        return true;
+      });
+      setPlannedItems(deduped);
       setLoading(false);
     });
   }, []);

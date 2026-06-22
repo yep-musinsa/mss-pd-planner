@@ -46,7 +46,9 @@ function loadMembers(): Member[] {
 }
 function saveMembers(members: Member[]) { localStorage.setItem(MEMBERS_KEY, JSON.stringify(members)); }
 
-let nextId = 1000;
+function generateId() {
+  return `u${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
+}
 
 // ── zoom 설정 ──────────────────────────────────────────────────
 type GanttZoom = 'week' | 'month' | 'quarter' | 'year';
@@ -278,7 +280,7 @@ function AppInner({ isAdmin, logout }: { isAdmin: boolean; logout: () => void })
 
   /* ── 아이템 CRUD ── */
   function handleAddItem(item: Omit<GanttItem, 'id'>) {
-    const newItem = { ...item, id: `u${nextId++}` };
+    const newItem = { ...item, id: generateId() };
     updatePlanned([...plannedItems, newItem]);
   }
   function handleEditItem(item: Omit<GanttItem, 'id'>) {
