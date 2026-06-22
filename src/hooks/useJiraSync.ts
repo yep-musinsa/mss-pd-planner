@@ -20,6 +20,7 @@ interface JiraIssue {
     issuetype: { name: string };
     parent?: { key: string; fields: { summary: string } };
     duedate?: string;
+    labels?: string[];
   };
 }
 
@@ -105,7 +106,7 @@ const API_BASE = IS_LOCAL
   ? '/jira-api/rest/api/3'
   : 'https://jira-proxy.ye-park.workers.dev/jira-proxy/rest/api/3';
 const DATE_FIELDS = ['summary', 'status', 'assignee', 'issuetype', 'parent',
-  'duedate', ...START_FIELDS, ...END_FIELDS].join(',');
+  'duedate', 'labels', ...START_FIELDS, ...END_FIELDS].join(',');
 
 async function fetchAllIssues(
   jql: string,
@@ -169,6 +170,33 @@ async function syncTiered(
   }
   const tier1Keys = tier1Issues.map(i => i.key);
   setProgress(`Tier 1 완료 — Initiative ${tier1Keys.length}건`);
+
+  // ── 미정 (PD 라벨 + 담당자 없는 Initiative) ──
+  const unassignedItems: GanttItem[] = [];
+  for (const issue of tier1Issues) {
+    const labels: string[] = (issue.fields.labels as string[] | undefined) ?? [];
+    if (!labels.map((l: string) => l.toUpperCase()).includes('PD')) continue;
+    const member = findMember(issue.fields.assignee, members);
+    if (member) continue; // 담당자 있으면 일반 렌더링에 맡김
+
+    const startDate = extractDate(issue.fields, START_FIELDS);
+    const endDate   = extractDate(issue.fields, END_FIELDS);
+    const today = new Date().toISOString().slice(0, 10);
+
+    unassignedItems.push({
+      id: `jira-${issue.key}`,
+      type: 'jira',
+      title: issue.fields.summary,
+      memberId: 'unassigned',
+      startDate: startDate || today,
+      endDate: endDate || today,
+      status: STATUS_MAP[issue.fields.status.name] ?? 'todo',
+      jiraKey: issue.key,
+      jiraUrl: `https://${settings.baseUrl}/browse/${issue.key}`,
+      issueType: issue.fields.issuetype.name,
+      noDates: !startDate || !endDate,
+    });
+  }
 
   // ── Tier 2: Epic (full fields for display) ──
   setProgress('Tier 2 — Epic 조회 중...');
@@ -234,6 +262,14 @@ async function syncTiered(
   const seen = new Set<string>();
   const allItems: GanttItem[] = [];
   for (const item of [...tier3Items, ...tier2Items]) {
+    if (!seen.has(item.id)) {
+      seen.add(item.id);
+      allItems.push(item);
+    }
+  }
+
+  // 미정 항목 추가 (tier2/3에 이미 포함된 경우 제외)
+  for (const item of unassignedItems) {
     if (!seen.has(item.id)) {
       seen.add(item.id);
       allItems.push(item);
