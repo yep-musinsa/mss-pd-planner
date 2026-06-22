@@ -203,22 +203,24 @@ async function syncTiered(
   });
   setProgress(`Tier 2 완료 — Epic ${tier2Keys.length}건 (팀 배정: ${tier2Items.length}건)`);
 
-  // ── 미정 (PD 라벨 + 담당자 없는 Initiative) ──
-  // 단, 하위에 "PD"로 시작하는 Epic이 있는 Initiative는 제외
+  // ── 미정 (Suggested 상태 + 하위에 PD- 키 Epic 없는 Initiative) ──
+  // 이미 조회된 tier2Issues에서 각 Initiative의 하위 Epic 키를 확인
   const initiativesWithPdEpic = new Set<string>();
   for (const epic of tier2Issues) {
-    if (!epic.fields.summary.trim().toUpperCase().startsWith('PD')) continue;
+    if (!epic.key.toUpperCase().startsWith('PD-')) continue;
     const parentKey = (epic.fields.parent as { key?: string } | undefined)?.key;
     if (parentKey) initiativesWithPdEpic.add(parentKey);
   }
 
   const unassignedItems: GanttItem[] = [];
   for (const issue of tier1Issues) {
+    // PD 라벨 있는 것만
     const labels: string[] = (issue.fields.labels as string[] | undefined) ?? [];
     if (!labels.map((l: string) => l.toUpperCase()).includes('PD')) continue;
-    const member = findMember(issue.fields.assignee, members);
-    if (member) continue; // 담당자 있으면 일반 렌더링에 맡김
-    if (initiativesWithPdEpic.has(issue.key)) continue; // PD Epic 하위에 있으면 제외
+    // 상태가 Suggested인 것만
+    if (!issue.fields.status.name.toLowerCase().includes('suggest')) continue;
+    // 하위에 PD- 키 Epic이 있으면 제외
+    if (initiativesWithPdEpic.has(issue.key)) continue;
 
     const startDate = extractDate(issue.fields, START_FIELDS);
     const endDate   = extractDate(issue.fields, END_FIELDS);
