@@ -391,7 +391,7 @@ function AppInner({ isAdmin, logout }: { isAdmin: boolean; logout: () => void })
               className="flex items-center gap-1.5 text-xs font-medium px-3 bg-gray-100 text-gray-600 hover:bg-gray-200 transition-colors disabled:opacity-50"
               style={{ borderRadius: 4, height: 36 }}>
               <RefreshCw size={12} className={jiraSyncLoading ? 'animate-spin' : ''} />
-              {jiraSyncLoading ? '동기화 중...' : 'Jira 수동 동기화'}
+              {jiraSyncLoading ? '동기화 중...' : 'Jira 동기화'}
             </button>
           </div>
 
