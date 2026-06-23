@@ -22,8 +22,13 @@ import { useAuth } from './contexts/AuthContext';
 import LoginPage from './components/LoginPage';
 import { usePlannedItems } from './hooks/usePlannedItems';
 
-const ITEMS_KEY   = 'pd-planner-items';
-const MEMBERS_KEY = 'pd-planner-members';
+const ITEMS_KEY         = 'pd-planner-items';
+const MEMBERS_KEY       = 'pd-planner-members';
+const CUSTOM_TITLES_KEY = 'pd-planner-custom-titles';
+
+function loadCustomTitles(): Record<string, string> {
+  try { const s = localStorage.getItem(CUSTOM_TITLES_KEY); return s ? JSON.parse(s) : {}; } catch { return {}; }
+}
 
 function loadJiraItems(): GanttItem[] {
   try {
@@ -223,6 +228,7 @@ function AppInner({ isAdmin, logout }: { isAdmin: boolean; logout: () => void })
   const [syncFlash, setSyncFlash] = useState(false);
   const [ganttAllCollapsed, setGanttAllCollapsed] = useState(false);
   const [ganttGroupBy, setGanttGroupBy] = useState<'member' | 'initiative'>('member');
+  const [customTitles, setCustomTitles] = useState<Record<string, string>>(loadCustomTitles);
   const { sync: jiraSync, loading: jiraSyncLoading } = useJiraSync();
 
   const ganttRef        = useRef<GanttChartHandle>(null);
@@ -337,6 +343,30 @@ function AppInner({ isAdmin, logout }: { isAdmin: boolean; logout: () => void })
       localStorage.setItem('pd-planner-jira', JSON.stringify(updated));
       handleJiraSyncComplete(synced);
     }
+  }
+
+  function handleInitiativeClick(initiativeKey: string, item?: GanttItem) {
+    const today = new Date().toISOString().slice(0, 10);
+    const displayItem: GanttItem = item ?? {
+      id: `virtual-${initiativeKey}`,
+      type: 'jira',
+      title: initiativeKey,
+      memberId: 'unassigned',
+      startDate: today,
+      endDate: today,
+      status: 'todo',
+      issueType: 'Initiative',
+      noDates: true,
+    };
+    setSelectedItem(displayItem);
+  }
+
+  function handleSaveCustomTitle(initiativeKey: string, title: string) {
+    const updated = title
+      ? { ...customTitles, [initiativeKey]: title }
+      : Object.fromEntries(Object.entries(customTitles).filter(([k]) => k !== initiativeKey));
+    setCustomTitles(updated);
+    localStorage.setItem(CUSTOM_TITLES_KEY, JSON.stringify(updated));
   }
 
   // 앱 로드 시 자동 동기화 + 1시간마다 주기적 동기화
@@ -549,6 +579,8 @@ function AppInner({ isAdmin, logout }: { isAdmin: boolean; logout: () => void })
             viewEnd={viewEnd}
             colW={ZOOM_COL_W[ganttZoom]}
             onClickItem={item => setSelectedItem(item)}
+            customTitles={customTitles}
+            onClickInitiative={handleInitiativeClick}
           />
         )}
         {view === 'dashboard' && (
@@ -597,6 +629,12 @@ function AppInner({ isAdmin, logout }: { isAdmin: boolean; logout: () => void })
             handleDeleteItem(selectedItem.id);
             setSelectedItem(null);
           }}
+          customTitle={selectedItem.issueType === 'Initiative'
+            ? customTitles[selectedItem.jiraKey ?? selectedItem.title] ?? ''
+            : undefined}
+          onSaveCustomTitle={selectedItem.issueType === 'Initiative'
+            ? (title) => handleSaveCustomTitle(selectedItem.jiraKey ?? selectedItem.title, title)
+            : undefined}
         />
       )}
 
