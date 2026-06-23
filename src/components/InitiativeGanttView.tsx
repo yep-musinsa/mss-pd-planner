@@ -111,20 +111,32 @@ const InitiativeGanttView = forwardRef<GanttChartHandle, Props>(function Initiat
     const taskItems = items.filter(i => i.type === 'jira' && i.issueType !== 'Epic' && i.issueType !== 'Initiative');
     const initItems = items.filter(i => i.type === 'jira' && i.issueType === 'Initiative');
 
+    // initiativeKey → GanttItem 빠른 조회
+    const initByKey = new Map(initItems.filter(i => i.jiraKey).map(i => [i.jiraKey!, i]));
+    const initByTitle = new Map(initItems.map(i => [i.title, i]));
+
     const map = new Map<string, InitGroup>();
 
     for (const epic of epicItems) {
-      const name = epic.epicName ?? '기타';
-      if (!map.has(name)) {
-        map.set(name, { key: name, name, item: initItems.find(i => i.title === name), epics: [] });
+      // initiativeKey(jiraKey)로 먼저 매칭, 없으면 epicName(title)으로 폴백
+      const initItem = epic.initiativeKey
+        ? (initByKey.get(epic.initiativeKey) ?? initByTitle.get(epic.epicName ?? ''))
+        : initByTitle.get(epic.epicName ?? '');
+
+      const groupKey = epic.initiativeKey ?? epic.epicName ?? '기타';
+      const groupName = epic.epicName ?? '기타';
+
+      if (!map.has(groupKey)) {
+        map.set(groupKey, { key: groupKey, name: groupName, item: initItem, epics: [] });
       }
-      map.get(name)!.epics.push({ epic, tasks: taskItems.filter(t => t.epicName === epic.title) });
+      map.get(groupKey)!.epics.push({ epic, tasks: taskItems.filter(t => t.epicName === epic.title) });
     }
 
     // 독립 Initiative (Epic 없는 것)
     for (const init of initItems) {
-      if (!map.has(init.title)) {
-        map.set(init.title, { key: init.title, name: init.title, item: init, epics: [] });
+      const groupKey = init.jiraKey ?? init.title;
+      if (!map.has(groupKey)) {
+        map.set(groupKey, { key: groupKey, name: init.title, item: init, epics: [] });
       }
     }
 
@@ -222,7 +234,7 @@ const InitiativeGanttView = forwardRef<GanttChartHandle, Props>(function Initiat
       const isCol     = collapsed.has(group.key);
       const item      = group.item;
       const sc        = item ? STATUS_CFG[item.status] : null;
-      const initKey   = item?.jiraKey ?? group.name;
+      const initKey   = item?.jiraKey ?? group.key;
       const displayName = customTitles[initKey] || group.name;
       const hasCustom   = !!customTitles[initKey];
       return (
