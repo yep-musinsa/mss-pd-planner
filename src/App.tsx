@@ -11,6 +11,7 @@ import {
 import type { GanttItem, Member, ViewMode, JiraSettings } from './types';
 import { MEMBERS } from './data';
 import GanttChart, { type GanttChartHandle } from './components/GanttChart';
+import InitiativeGanttView from './components/InitiativeGanttView';
 import Dashboard from './components/Dashboard';
 import AddPlanModal from './components/AddPlanModal';
 import ItemDetailPanel from './components/ItemDetailPanel';
@@ -221,9 +222,11 @@ function AppInner({ isAdmin, logout }: { isAdmin: boolean; logout: () => void })
   const [jiraSettings, setJiraSettings] = useState<JiraSettings>(loadJiraSettings);
   const [syncFlash, setSyncFlash] = useState(false);
   const [ganttAllCollapsed, setGanttAllCollapsed] = useState(false);
+  const [ganttGroupBy, setGanttGroupBy] = useState<'member' | 'initiative'>('member');
   const { sync: jiraSync, loading: jiraSyncLoading } = useJiraSync();
 
-  const ganttRef = useRef<GanttChartHandle>(null);
+  const ganttRef        = useRef<GanttChartHandle>(null);
+  const initiativeRef   = useRef<GanttChartHandle>(null);
 
   const { viewStart, viewEnd } = useMemo(
     () => calcViewRange(viewCenter, ganttZoom),
@@ -357,7 +360,10 @@ function AppInner({ isAdmin, logout }: { isAdmin: boolean; logout: () => void })
   // Today 클릭: 뷰 센터를 오늘로 + 타임라인 스크롤
   function handleToday() {
     setViewCenter(new Date());
-    setTimeout(() => ganttRef.current?.scrollToToday(), 80);
+    setTimeout(() => {
+      if (ganttGroupBy === 'member') ganttRef.current?.scrollToToday();
+      else initiativeRef.current?.scrollToToday();
+    }, 80);
   }
 
   const plannedCount = plannedItems.length;
@@ -475,10 +481,22 @@ function AppInner({ isAdmin, logout }: { isAdmin: boolean; logout: () => void })
               <>
                 {/* 날짜 탐색 */}
                 <div className="flex items-center gap-1.5">
+                  {/* 뷰 전환 토글 */}
+                  <div className="flex items-center gap-0.5 bg-gray-100 p-0.5" style={{ borderRadius: 4, height: 28 }}>
+                    {(['member', 'initiative'] as const).map(g => (
+                      <button key={g} onClick={() => setGanttGroupBy(g)}
+                        className={`px-2.5 py-1 text-xs font-semibold rounded-md transition-colors
+                          ${ganttGroupBy === g ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}>
+                        {g === 'member' ? '팀원별' : '이니셔티브별'}
+                      </button>
+                    ))}
+                  </div>
+
                   <button
                     onClick={() => {
-                      if (ganttAllCollapsed) { ganttRef.current?.expandAll(); setGanttAllCollapsed(false); }
-                      else { ganttRef.current?.collapseAll(); setGanttAllCollapsed(true); }
+                      const ref = ganttGroupBy === 'member' ? ganttRef : initiativeRef;
+                      if (ganttAllCollapsed) { ref.current?.expandAll(); setGanttAllCollapsed(false); }
+                      else { ref.current?.collapseAll(); setGanttAllCollapsed(true); }
                     }}
                     className="px-2.5 text-xs font-semibold border border-gray-200 text-gray-600 hover:bg-gray-50 transition-colors"
                     style={{ borderRadius: 4, height: 28 }}>
@@ -510,7 +528,7 @@ function AppInner({ isAdmin, logout }: { isAdmin: boolean; logout: () => void })
 
       {/* ── 메인 콘텐츠 ── */}
       <main className="flex-1 max-w-full w-full px-6 py-5">
-        {view === 'gantt' && (
+        {view === 'gantt' && ganttGroupBy === 'member' && (
           <GanttChart
             ref={ganttRef}
             items={filteredItems}
@@ -520,6 +538,17 @@ function AppInner({ isAdmin, logout }: { isAdmin: boolean; logout: () => void })
             colW={ZOOM_COL_W[ganttZoom]}
             onClickItem={item => setSelectedItem(item)}
             onUpdateDates={handleUpdateDates}
+          />
+        )}
+        {view === 'gantt' && ganttGroupBy === 'initiative' && (
+          <InitiativeGanttView
+            ref={initiativeRef}
+            items={filteredItems}
+            members={members}
+            viewStart={viewStart}
+            viewEnd={viewEnd}
+            colW={ZOOM_COL_W[ganttZoom]}
+            onClickItem={item => setSelectedItem(item)}
           />
         )}
         {view === 'dashboard' && (
