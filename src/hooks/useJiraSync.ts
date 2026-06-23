@@ -289,6 +289,31 @@ async function syncTiered(
     }
   }
 
+  // 모든 tier1 Initiative 추가 (이니셔티브별 뷰의 KEY 표시용)
+  // 이미 unassignedItems에 포함된 것은 중복 제외
+  for (const issue of tier1Issues) {
+    const id = `jira-${issue.key}`;
+    if (seen.has(id)) continue;
+    const startDate = extractDate(issue.fields, START_FIELDS);
+    const endDate   = extractDate(issue.fields, END_FIELDS);
+    const today     = new Date().toISOString().slice(0, 10);
+    const member    = findMember(issue.fields.assignee, members);
+    allItems.push({
+      id,
+      type: 'jira',
+      title: issue.fields.summary,
+      memberId: member ? member.id : 'unassigned',
+      startDate: startDate || today,
+      endDate: endDate || today,
+      status: STATUS_MAP[issue.fields.status.name] ?? 'todo',
+      jiraKey: issue.key,
+      jiraUrl: `https://${settings.baseUrl}/browse/${issue.key}`,
+      issueType: issue.fields.issuetype.name,
+      noDates: !startDate || !endDate,
+    });
+    seen.add(id);
+  }
+
   return allItems;
 }
 
