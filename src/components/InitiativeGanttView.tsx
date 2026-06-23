@@ -77,11 +77,13 @@ interface Props {
   viewEnd: Date;
   colW?: number;
   onClickItem: (item: GanttItem) => void;
+  customTitles?: Record<string, string>;
+  onClickInitiative?: (initiativeKey: string, item?: GanttItem) => void;
 }
 
 // ── 컴포넌트 ──────────────────────────────────────────────────
 const InitiativeGanttView = forwardRef<GanttChartHandle, Props>(function InitiativeGanttView(
-  { items, members, viewStart, viewEnd, colW = 28, onClickItem },
+  { items, members, viewStart, viewEnd, colW = 28, onClickItem, customTitles = {}, onClickInitiative },
   ref,
 ) {
   const leftRef  = useRef<HTMLDivElement>(null);
@@ -217,18 +219,16 @@ const InitiativeGanttView = forwardRef<GanttChartHandle, Props>(function Initiat
   function renderLeft(row: RowData) {
     if (row.kind === 'init') {
       const { group } = row;
-      const isCol = collapsed.has(group.key);
-      const item  = group.item;
-      const sc    = item ? STATUS_CFG[item.status] : null;
+      const isCol     = collapsed.has(group.key);
+      const item      = group.item;
+      const sc        = item ? STATUS_CFG[item.status] : null;
+      const initKey   = item?.jiraKey ?? group.name;
+      const displayName = customTitles[initKey] || group.name;
+      const hasCustom   = !!customTitles[initKey];
       return (
         <div key={`l-init-${group.key}`}
-          className="flex items-center border-b select-none cursor-pointer hover:bg-purple-50 transition-colors"
-          style={{ height: INIT_H, background: '#f5f3ff', borderColor: '#ddd6fe' }}
-          onClick={() => setCollapsed(prev => {
-            const n = new Set(prev);
-            n.has(group.key) ? n.delete(group.key) : n.add(group.key);
-            return n;
-          })}>
+          className="flex items-center border-b select-none"
+          style={{ height: INIT_H, background: '#f5f3ff', borderColor: '#ddd6fe' }}>
           {/* KEY */}
           <div style={{ width: COL_KEY, flexShrink: 0 }} className="px-2">
             {item?.jiraKey
@@ -244,10 +244,20 @@ const InitiativeGanttView = forwardRef<GanttChartHandle, Props>(function Initiat
               Initia…
             </span>
           </div>
-          {/* SUMMARY */}
+          {/* SUMMARY: chevron(접기) + 타이틀(상세 열기) 분리 */}
           <div className="flex-1 min-w-0 px-1.5 flex items-center gap-1">
-            <span className="text-[9px] text-violet-500 flex-shrink-0">{isCol ? '▶' : '▼'}</span>
-            <p className="text-[12px] font-medium text-violet-900 truncate">{group.name}</p>
+            <button
+              className="text-[9px] text-violet-400 hover:text-violet-700 flex-shrink-0 px-0.5 transition-colors"
+              onClick={() => setCollapsed(prev => { const n = new Set(prev); n.has(group.key) ? n.delete(group.key) : n.add(group.key); return n; })}>
+              {isCol ? '▶' : '▼'}
+            </button>
+            <button
+              className="flex-1 min-w-0 text-left hover:underline decoration-violet-300 underline-offset-2 transition-colors group"
+              onClick={() => onClickInitiative?.(initKey, item)}>
+              <p className={`text-[12px] font-medium truncate ${hasCustom ? 'text-violet-700' : 'text-violet-900'}`}>
+                {displayName}
+              </p>
+            </button>
           </div>
           {/* 담당자 */}
           <div style={{ width: COL_ASSIGNEE, flexShrink: 0 }} className="px-1.5">

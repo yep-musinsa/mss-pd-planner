@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { X, ExternalLink, Pencil, Trash2, Calendar } from 'lucide-react';
 import type { GanttItem, Member } from '../types';
 import { STATUS_COLOR, STATUS_LABEL } from '../data';
@@ -9,14 +10,19 @@ interface Props {
   onClose: () => void;
   onEdit: () => void;
   onDelete: () => void;
+  // 이니셔티브 커스텀 타이틀
+  customTitle?: string;
+  onSaveCustomTitle?: (title: string) => void;
 }
 
 const STATUS_DOT: Record<string, string> = {
   todo: '#a5b4fc', in_progress: '#6366f1', done: '#22c55e', hold: '#f59e0b',
 };
 
-export default function ItemDetailPanel({ item, member, memberItems = [], onClose, onEdit, onDelete }: Props) {
-  const isPlanned = item.type === 'planned';
+export default function ItemDetailPanel({ item, member, memberItems = [], onClose, onEdit, onDelete, customTitle, onSaveCustomTitle }: Props) {
+  const isPlanned    = item.type === 'planned';
+  const isInitiative = item.issueType === 'Initiative';
+  const [titleInput, setTitleInput] = useState(customTitle ?? '');
 
   // 담당자의 현재 진행 중 + 예정 일정 (완료 제외, 날짜 있는 것만, 현재 아이템 제외)
   const scheduleItems = memberItems
@@ -58,6 +64,34 @@ export default function ItemDetailPanel({ item, member, memberItems = [], onClos
               </a>
             )}
           </div>
+
+          {/* 커스텀 타이틀 (Initiative 전용) */}
+          {isInitiative && onSaveCustomTitle && (
+            <div>
+              <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1.5">차트 표시 타이틀</p>
+              <input
+                type="text"
+                value={titleInput}
+                onChange={e => setTitleInput(e.target.value)}
+                placeholder="입력하지 않으면 Jira 티켓명으로 표시"
+                className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-800 placeholder:text-gray-300 focus:outline-none focus:border-indigo-400 focus:ring-1 focus:ring-indigo-100"
+              />
+              <div className="flex gap-2 mt-2">
+                <button
+                  onClick={() => onSaveCustomTitle(titleInput.trim())}
+                  className="flex-1 py-1.5 rounded-lg bg-indigo-50 text-indigo-700 text-xs font-semibold hover:bg-indigo-100 transition-colors">
+                  저장
+                </button>
+                {titleInput && (
+                  <button
+                    onClick={() => { setTitleInput(''); onSaveCustomTitle(''); }}
+                    className="px-3 py-1.5 rounded-lg bg-gray-50 text-gray-500 text-xs font-medium hover:bg-gray-100 transition-colors">
+                    초기화
+                  </button>
+                )}
+              </div>
+            </div>
+          )}
 
           {/* 일정 */}
           <div>
