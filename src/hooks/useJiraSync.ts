@@ -199,7 +199,9 @@ async function syncTiered(
     const parentKey = (i.fields.parent as { key?: string } | undefined)?.key;
     const epicName = parentKey ? initiativeMap[parentKey] : undefined;
     const item = issueToItem(i, members, settings.baseUrl, epicName, true);
-    return item ? [item] : [];
+    if (!item) return [];
+    if (parentKey && initiativeMap[parentKey]) item.initiativeKey = parentKey;
+    return [item];
   });
   setProgress(`Tier 2 완료 — Epic ${tier2Keys.length}건 (팀 배정: ${tier2Items.length}건)`);
 
