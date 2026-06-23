@@ -475,7 +475,18 @@ function AppInner({ isAdmin, logout }: { isAdmin: boolean; logout: () => void })
         <div className="bg-white border-b border-gray-100 sticky top-14 z-20">
           <div className="max-w-full px-6 py-2 flex items-center gap-1.5 flex-wrap">
 
-            {/* 필터 (맨 왼쪽) */}
+            {/* 뷰 전환 토글 (맨 왼쪽) */}
+            <div className="flex items-center gap-0.5 bg-gray-100 p-0.5 mr-1.5" style={{ borderRadius: 4, height: 28 }}>
+              {(['member', 'initiative'] as const).map(g => (
+                <button key={g} onClick={() => setGanttGroupBy(g)}
+                  className={`px-2.5 py-1 text-xs font-semibold rounded-md transition-colors
+                    ${ganttGroupBy === g ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}>
+                  {g === 'member' ? '팀원별' : '이니셔티브별'}
+                </button>
+              ))}
+            </div>
+
+            {/* 필터 */}
             {view === 'gantt' && (
               <>
                 {/* 상태 멀티셀렉트 */}
@@ -511,17 +522,6 @@ function AppInner({ isAdmin, logout }: { isAdmin: boolean; logout: () => void })
               <>
                 {/* 날짜 탐색 */}
                 <div className="flex items-center gap-1.5">
-                  {/* 뷰 전환 토글 */}
-                  <div className="flex items-center gap-0.5 bg-gray-100 p-0.5" style={{ borderRadius: 4, height: 28 }}>
-                    {(['member', 'initiative'] as const).map(g => (
-                      <button key={g} onClick={() => setGanttGroupBy(g)}
-                        className={`px-2.5 py-1 text-xs font-semibold rounded-md transition-colors
-                          ${ganttGroupBy === g ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}>
-                        {g === 'member' ? '팀원별' : '이니셔티브별'}
-                      </button>
-                    ))}
-                  </div>
-
                   <button
                     onClick={() => {
                       const ref = ganttGroupBy === 'member' ? ganttRef : initiativeRef;
