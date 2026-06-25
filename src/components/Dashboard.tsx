@@ -560,7 +560,7 @@ export default function Dashboard({ items, members, jiraSettings, onSync, syncLo
               <th className="px-5 py-2.5 text-left font-semibold" style={{ width: COL_WIDTHS.key }}>KEY</th>
               {showMember && <th className="px-3 py-2.5 text-left font-semibold" style={{ width: COL_WIDTHS.member }}>담당자</th>}
               <th className="px-3 py-2.5 text-left font-semibold" style={{ width: COL_WIDTHS.type }}>TYPE</th>
-              <th className="px-3 py-2.5 text-left font-semibold">SUMMARY</th>
+              <th className="px-3 py-2.5 text-left font-semibold" style={{ width: 360 }}>SUMMARY</th>
               <th className="px-3 py-2.5 text-left font-semibold" style={{ width: COL_WIDTHS.status }}>STATUS</th>
               <th className="px-3 py-2.5 text-right font-semibold" style={{ width: COL_WIDTHS.md }}>MD</th>
               <th className="px-3 py-2.5 text-left font-semibold" style={{ width: COL_WIDTHS.date }}>START</th>
