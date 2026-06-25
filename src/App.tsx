@@ -272,6 +272,7 @@ function AppInner({ isAdmin, logout }: { isAdmin: boolean; logout: () => void })
   const statusOptions = useMemo<DropOpt[]>(() => [
     { value: 'todo',        label: 'SUGGESTED' },
     { value: 'in_progress', label: 'In Progress' },
+    { value: 'hold',        label: 'Hold' },
     { value: 'done',        label: 'Done' },
   ], []);
 
