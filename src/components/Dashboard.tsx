@@ -550,18 +550,30 @@ export default function Dashboard({ items, members, jiraSettings, onSync, syncLo
         };
 
         const theadCols = (showMember: boolean) => (
-          <thead>
-            <tr className="bg-gray-50 text-[10px] text-gray-500 uppercase border-b border-gray-100">
-              <th className="px-5 py-2.5 text-left font-semibold">KEY</th>
-              {showMember && <th className="px-3 py-2.5 text-left font-semibold">담당자</th>}
-              <th className="px-3 py-2.5 text-left font-semibold">TYPE</th>
-              <th className="px-3 py-2.5 text-left font-semibold">SUMMARY</th>
-              <th className="px-3 py-2.5 text-left font-semibold">STATUS</th>
-              <th className="px-3 py-2.5 text-right font-semibold">MD</th>
-              <th className="px-3 py-2.5 text-left font-semibold">START</th>
-              <th className="px-3 py-2.5 text-left font-semibold">END</th>
-            </tr>
-          </thead>
+          <>
+            <colgroup>
+              <col style={{ width: 110 }} />
+              {showMember && <col style={{ width: 80 }} />}
+              <col style={{ width: 72 }} />
+              <col />
+              <col style={{ width: 110 }} />
+              <col style={{ width: 52 }} />
+              <col style={{ width: 100 }} />
+              <col style={{ width: 100 }} />
+            </colgroup>
+            <thead>
+              <tr className="bg-gray-50 text-[10px] text-gray-500 uppercase border-b border-gray-100">
+                <th className="px-5 py-2.5 text-left font-semibold">KEY</th>
+                {showMember && <th className="px-3 py-2.5 text-left font-semibold">담당자</th>}
+                <th className="px-3 py-2.5 text-left font-semibold">TYPE</th>
+                <th className="px-3 py-2.5 text-left font-semibold">SUMMARY</th>
+                <th className="px-3 py-2.5 text-left font-semibold">STATUS</th>
+                <th className="px-3 py-2.5 text-right font-semibold">MD</th>
+                <th className="px-3 py-2.5 text-left font-semibold">START</th>
+                <th className="px-3 py-2.5 text-left font-semibold">END</th>
+              </tr>
+            </thead>
+          </>
         );
 
         // 특정 멤버 선택: 단일 테이블
