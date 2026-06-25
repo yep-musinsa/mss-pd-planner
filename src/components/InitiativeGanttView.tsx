@@ -46,7 +46,7 @@ const TYPE_CFG: Record<string, { bg: string; color: string; label: string }> = {
 
 const BAR_OVERRIDE: Record<string, string> = {
   Initiative: '#7c3aed',
-  Epic:       '#f97316',
+  Epic:       '#fb923c',
   Design:     '#6366f1',
 };
 
@@ -299,13 +299,13 @@ const InitiativeGanttView = forwardRef<GanttChartHandle, Props>(function Initiat
       const sc = STATUS_CFG[epic.status] ?? STATUS_CFG.todo;
       return (
         <div key={`l-epic-${epic.id}`}
-          className="flex items-center border-b border-gray-100 cursor-pointer hover:bg-teal-50/40 transition-colors"
+          className="flex items-center border-b border-gray-100 cursor-pointer hover:bg-orange-50/40 transition-colors"
           style={{ height: EPIC_H, background: '#f9fffe' }}
           onClick={() => onClickItem(epic)}>
           <div style={{ width: COL_KEY, flexShrink: 0 }} className="pl-5 pr-2">
             {epic.jiraKey && (
               <a href={epic.jiraUrl} target="_blank" rel="noreferrer"
-                className="text-[10px] font-mono text-teal-500 hover:underline block truncate"
+                className="text-[10px] font-mono text-orange-400 hover:underline block truncate"
                 onClick={e => e.stopPropagation()}>{epic.jiraKey}</a>
             )}
           </div>
