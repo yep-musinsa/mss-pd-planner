@@ -34,7 +34,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // 접속 로그 기록 (fire-and-forget)
     const base = window.location.hostname === 'localhost'
       ? '/jira-proxy'
-      : 'https://pd-planner-proxy.yep-musinsa.workers.dev/jira-proxy';
+      : 'https://jira-proxy.ye-park.workers.dev/jira-proxy';
     fetch(`${base}/access-log`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
