@@ -41,8 +41,8 @@ const STATUS_CFG: Record<GanttItem['status'], { bg: string; color: string; label
 
 // ── 간트바 색상 ────────────────────────────────────────────────
 const BAR_COLOR: Record<GanttItem['status'], string> = {
-  todo:        '#94a3b8',
-  in_progress: '#3b82f6',
+  todo:        '#a5b4fc',
+  in_progress: '#6366f1',
   done:        '#d1d5db',
   hold:        '#d1d5db',
 };
