@@ -174,7 +174,7 @@ export default function Dashboard({ items, members, jiraSettings, onSync, syncLo
     [items, today]
   );
   const noDatesItems = useMemo(() =>
-    items.filter(i => i.noDates),
+    items.filter(i => i.noDates && i.status !== 'done'),
     [items]
   );
   const plannedItems = useMemo(() =>
@@ -243,6 +243,8 @@ export default function Dashboard({ items, members, jiraSettings, onSync, syncLo
     if (filterStatuses.length > 0) {
       base = base.filter(i => i.noDates || filterStatuses.includes(i.status));
     }
+    // 일정 없는 완료 건 미노출
+    base = base.filter(i => !(i.noDates && i.status === 'done'));
     return base;
   }, [listFilters, overdueItems, noDatesItems, plannedItems, selectedMemberId, items, selectedQ, filterStatuses]);
 
