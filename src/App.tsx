@@ -629,6 +629,7 @@ function AppInner({ isAdmin, logout }: { isAdmin: boolean; logout: () => void })
 
       {selectedItem && (
         <ItemDetailPanel
+          key={selectedItem.id}
           item={selectedItem}
           member={members.find(m => m.id === selectedItem.memberId)}
           memberItems={[...plannedItems, ...jiraItems].filter(i => i.memberId === selectedItem.memberId)}

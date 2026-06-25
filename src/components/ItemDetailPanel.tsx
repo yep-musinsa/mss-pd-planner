@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { X, ExternalLink, Pencil, Trash2, Calendar } from 'lucide-react';
 import type { GanttItem, Member } from '../types';
 import { STATUS_COLOR, STATUS_LABEL } from '../data';
@@ -23,6 +23,7 @@ export default function ItemDetailPanel({ item, member, memberItems = [], onClos
   const isPlanned    = item.type === 'planned';
   const isInitiative = item.issueType === 'Initiative';
   const [titleInput, setTitleInput] = useState(customTitle ?? '');
+  useEffect(() => { setTitleInput(customTitle ?? ''); }, [customTitle]);
 
   // 담당자의 현재 진행 중 + 예정 일정 (완료 제외, 날짜 있는 것만, 현재 아이템 제외)
   const scheduleItems = memberItems
