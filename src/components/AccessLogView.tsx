@@ -10,7 +10,7 @@ interface LogEntry {
 
 const PROXY_BASE = window.location.hostname === 'localhost'
   ? '/jira-proxy'
-  : 'https://pd-planner-proxy.yep-musinsa.workers.dev/jira-proxy';
+  : 'https://jira-proxy.ye-park.workers.dev/jira-proxy';
 
 export default function AccessLogView({ email }: { email: string }) {
   const [logs, setLogs] = useState<LogEntry[]>([]);
