@@ -36,7 +36,7 @@ const STATUS_CFG: Record<string, { bg: string; color: string; label: string }> =
 
 const TYPE_CFG: Record<string, { bg: string; color: string; label: string }> = {
   Initiative: { bg: '#ede9fe', color: '#7c3aed', label: 'Initiative' },
-  Epic:       { bg: '#ccfbf1', color: '#0d9488', label: 'Epic' },
+  Epic:       { bg: '#fff7ed', color: '#c2410c', label: 'Epic' },
   Design:     { bg: '#e0e7ff', color: '#4338ca', label: 'Design' },
   Task:       { bg: '#f1f5f9', color: '#475569', label: 'Task' },
   Story:      { bg: '#d1fae5', color: '#065f46', label: 'Story' },
@@ -249,7 +249,7 @@ const InitiativeGanttView = forwardRef<GanttChartHandle, Props>(function Initiat
           </div>
           {/* TYPE */}
           <div style={{ width: COL_TYPE, flexShrink: 0 }} className="px-1">
-            <span className="inline-flex rounded px-1.5 py-0.5 text-[10px] font-semibold" style={{ background: '#ede9fe', color: '#7c3aed' }}>
+            <span className="inline-flex rounded px-1.5 py-0.5 text-[10px] font-medium" style={{ background: '#ede9fe', color: '#7c3aed' }}>
               Initia…
             </span>
           </div>
@@ -263,7 +263,7 @@ const InitiativeGanttView = forwardRef<GanttChartHandle, Props>(function Initiat
             <button
               className="flex-1 min-w-0 text-left hover:underline decoration-violet-300 underline-offset-2 transition-colors group"
               onClick={() => onClickInitiative?.(initKey, item)}>
-              <p className={`text-[12px] font-medium truncate ${hasCustom ? 'text-violet-700' : 'text-violet-900'}`}>
+              <p className={`text-[13px] font-medium truncate ${hasCustom ? 'text-violet-700' : 'text-violet-900'}`}>
                 {displayName}
               </p>
             </button>
@@ -305,7 +305,7 @@ const InitiativeGanttView = forwardRef<GanttChartHandle, Props>(function Initiat
             )}
           </div>
           <div style={{ width: COL_TYPE, flexShrink: 0 }} className="px-1">
-            <span className="inline-flex rounded px-1.5 py-0.5 text-[10px] font-semibold" style={{ background: tc.bg, color: tc.color }}>
+            <span className="inline-flex rounded px-1.5 py-0.5 text-[10px] font-medium" style={{ background: tc.bg, color: tc.color }}>
               {tc.label.length > 6 ? tc.label.slice(0, 5) + '…' : tc.label}
             </span>
           </div>
@@ -347,7 +347,7 @@ const InitiativeGanttView = forwardRef<GanttChartHandle, Props>(function Initiat
           )}
         </div>
         <div style={{ width: COL_TYPE, flexShrink: 0 }} className="px-1">
-          <span className="inline-flex rounded px-1.5 py-0.5 text-[10px] font-semibold" style={{ background: tc.bg, color: tc.color }}>
+          <span className="inline-flex rounded px-1.5 py-0.5 text-[10px] font-medium" style={{ background: tc.bg, color: tc.color }}>
             {tc.label.length > 6 ? tc.label.slice(0, 5) + '…' : tc.label}
           </span>
         </div>
