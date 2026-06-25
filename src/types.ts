@@ -1,6 +1,6 @@
 export type ItemType = 'jira' | 'planned';
 export type ItemStatus = 'todo' | 'in_progress' | 'done' | 'hold';
-export type ViewMode = 'gantt' | 'dashboard' | 'members' | 'settings';
+export type ViewMode = 'gantt' | 'dashboard' | 'members' | 'settings' | 'logs';
 
 export interface Member {
   id: string;

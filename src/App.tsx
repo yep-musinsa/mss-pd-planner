@@ -6,7 +6,7 @@ import {
 import { ko } from 'date-fns/locale';
 import {
   Plus, LayoutDashboard, Calendar,
-  Users, Settings, ChevronDown, Check, X, RefreshCw, LogOut,
+  Users, Settings, ChevronDown, Check, X, RefreshCw, LogOut, ScrollText,
 } from 'lucide-react';
 import type { GanttItem, Member, ViewMode, JiraSettings } from './types';
 import { MEMBERS } from './data';
@@ -17,6 +17,7 @@ import AddPlanModal from './components/AddPlanModal';
 import ItemDetailPanel from './components/ItemDetailPanel';
 import MemberManager from './components/MemberManager';
 import JiraSettingsPanel, { loadJiraSettings } from './components/JiraSettingsPanel';
+import AccessLogView from './components/AccessLogView';
 import { useJiraSync } from './hooks/useJiraSync';
 import { useAuth } from './contexts/AuthContext';
 import LoginPage from './components/LoginPage';
@@ -404,6 +405,7 @@ function AppInner({ isAdmin, logout }: { isAdmin: boolean; logout: () => void })
     { v: 'gantt'     as ViewMode, label: '타임라인',  Icon: Calendar },
     ...(isAdmin ? [{ v: 'members' as ViewMode, label: '팀원', Icon: Users }] : []),
     ...(isAdmin ? [{ v: 'settings' as ViewMode, label: 'Jira 설정', Icon: Settings }] : []),
+    ...(isAdmin ? [{ v: 'logs' as ViewMode, label: '접속 로그', Icon: ScrollText }] : []),
   ];
 
   const ZOOM_LABELS: Record<GanttZoom, string> = {
@@ -598,6 +600,9 @@ function AppInner({ isAdmin, logout }: { isAdmin: boolean; logout: () => void })
         )}
         {view === 'settings' && (
           <JiraSettingsPanel members={members} onSyncComplete={handleJiraSyncComplete} />
+        )}
+        {view === 'logs' && isAdmin && (
+          <AccessLogView email={user.email} />
         )}
       </main>
 
