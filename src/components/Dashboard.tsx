@@ -531,7 +531,11 @@ export default function Dashboard({ items, members, jiraSettings, onSync, syncLo
                 </div>
                 {item.epicName && <span className="text-[10px] text-gray-400 block truncate">{item.epicName}</span>}
               </td>
-              <td className="px-3 py-2.5 whitespace-nowrap" style={{ color: item.noDates ? '#f59e0b' : STATUS_COLOR[item.status] }}>
+              <td className="px-3 py-2.5 whitespace-nowrap" style={{
+                color: item.noDates
+                  ? (item.status === 'hold' ? STATUS_COLOR['hold'] : '#f59e0b')
+                  : STATUS_COLOR[item.status]
+              }}>
                 {item.noDates
                   ? (item.status === 'hold' ? 'Hold' : '일정 미기입')
                   : STATUS_LABEL[item.status]}
@@ -549,31 +553,20 @@ export default function Dashboard({ items, members, jiraSettings, onSync, syncLo
           );
         };
 
+        const COL_WIDTHS = { key: 110, member: 80, type: 72, status: 110, md: 52, date: 100 };
         const theadCols = (showMember: boolean) => (
-          <>
-            <colgroup>
-              <col style={{ width: 110 }} />
-              {showMember && <col style={{ width: 80 }} />}
-              <col style={{ width: 72 }} />
-              <col />
-              <col style={{ width: 110 }} />
-              <col style={{ width: 52 }} />
-              <col style={{ width: 100 }} />
-              <col style={{ width: 100 }} />
-            </colgroup>
-            <thead>
-              <tr className="bg-gray-50 text-[10px] text-gray-500 uppercase border-b border-gray-100">
-                <th className="px-5 py-2.5 text-left font-semibold">KEY</th>
-                {showMember && <th className="px-3 py-2.5 text-left font-semibold">담당자</th>}
-                <th className="px-3 py-2.5 text-left font-semibold">TYPE</th>
-                <th className="px-3 py-2.5 text-left font-semibold">SUMMARY</th>
-                <th className="px-3 py-2.5 text-left font-semibold">STATUS</th>
-                <th className="px-3 py-2.5 text-right font-semibold">MD</th>
-                <th className="px-3 py-2.5 text-left font-semibold">START</th>
-                <th className="px-3 py-2.5 text-left font-semibold">END</th>
-              </tr>
-            </thead>
-          </>
+          <thead>
+            <tr className="bg-gray-50 text-[10px] text-gray-500 uppercase border-b border-gray-100">
+              <th className="px-5 py-2.5 text-left font-semibold" style={{ width: COL_WIDTHS.key }}>KEY</th>
+              {showMember && <th className="px-3 py-2.5 text-left font-semibold" style={{ width: COL_WIDTHS.member }}>담당자</th>}
+              <th className="px-3 py-2.5 text-left font-semibold" style={{ width: COL_WIDTHS.type }}>TYPE</th>
+              <th className="px-3 py-2.5 text-left font-semibold">SUMMARY</th>
+              <th className="px-3 py-2.5 text-left font-semibold" style={{ width: COL_WIDTHS.status }}>STATUS</th>
+              <th className="px-3 py-2.5 text-right font-semibold" style={{ width: COL_WIDTHS.md }}>MD</th>
+              <th className="px-3 py-2.5 text-left font-semibold" style={{ width: COL_WIDTHS.date }}>START</th>
+              <th className="px-3 py-2.5 text-left font-semibold" style={{ width: COL_WIDTHS.date }}>END</th>
+            </tr>
+          </thead>
         );
 
         // 특정 멤버 선택: 단일 테이블
@@ -608,7 +601,7 @@ export default function Dashboard({ items, members, jiraSettings, onSync, syncLo
                   <span className="text-sm text-gray-400">{groupItems.length}건</span>
                 </div>
                 <div className="bg-white border border-gray-200 overflow-hidden" style={{ borderRadius: 8 }}>
-                  <table className="w-full text-xs">
+                  <table className="w-full text-xs" style={{ tableLayout: 'fixed' }}>
                     {theadCols(false)}
                     <tbody>{groupItems.map(item => renderRow(item, false))}</tbody>
                   </table>
