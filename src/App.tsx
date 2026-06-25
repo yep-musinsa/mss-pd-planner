@@ -25,10 +25,25 @@ import { usePlannedItems } from './hooks/usePlannedItems';
 
 const ITEMS_KEY         = 'pd-planner-items';
 const MEMBERS_KEY       = 'pd-planner-members';
-const CUSTOM_TITLES_KEY = 'pd-planner-custom-titles';
+const PROXY_BASE = window.location.hostname === 'localhost'
+  ? '/jira-proxy'
+  : 'https://jira-proxy.ye-park.workers.dev/jira-proxy';
 
-function loadCustomTitles(): Record<string, string> {
-  try { const s = localStorage.getItem(CUSTOM_TITLES_KEY); return s ? JSON.parse(s) : {}; } catch { return {}; }
+async function fetchCustomTitles(): Promise<Record<string, string>> {
+  try {
+    const res = await fetch(`${PROXY_BASE}/custom-titles`);
+    return res.ok ? await res.json() : {};
+  } catch { return {}; }
+}
+
+async function saveCustomTitlesRemote(titles: Record<string, string>): Promise<void> {
+  try {
+    await fetch(`${PROXY_BASE}/custom-titles`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(titles),
+    });
+  } catch {}
 }
 
 function loadJiraItems(): GanttItem[] {
@@ -230,7 +245,8 @@ function AppInner({ isAdmin, logout }: { isAdmin: boolean; logout: () => void })
   const [ganttAllCollapsed, setGanttAllCollapsed] = useState(false);
   const [ganttGroupBy, setGanttGroupBy] = useState<'member' | 'initiative'>('member');
   const prevGroupBy = useRef<'member' | 'initiative'>('member');
-  const [customTitles, setCustomTitles] = useState<Record<string, string>>(loadCustomTitles);
+  const [customTitles, setCustomTitles] = useState<Record<string, string>>({});
+  useEffect(() => { fetchCustomTitles().then(setCustomTitles); }, []);
   const { sync: jiraSync, loading: jiraSyncLoading } = useJiraSync();
 
   const ganttRef        = useRef<GanttChartHandle>(null);
@@ -369,7 +385,7 @@ function AppInner({ isAdmin, logout }: { isAdmin: boolean; logout: () => void })
       ? { ...customTitles, [initiativeKey]: title }
       : Object.fromEntries(Object.entries(customTitles).filter(([k]) => k !== initiativeKey));
     setCustomTitles(updated);
-    localStorage.setItem(CUSTOM_TITLES_KEY, JSON.stringify(updated));
+    saveCustomTitlesRemote(updated);
   }
 
   // 앱 로드 시 자동 동기화 + 1시간마다 주기적 동기화

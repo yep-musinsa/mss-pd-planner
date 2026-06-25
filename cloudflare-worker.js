@@ -81,6 +81,29 @@ export default {
       });
     }
 
+    // ── 커스텀 타이틀 조회 ──
+    if (url.pathname === '/jira-proxy/custom-titles' && request.method === 'GET') {
+      const data = await env.PD_KV.get('custom_titles');
+      return new Response(data ?? '{}', {
+        headers: { ...CORS_HEADERS, 'Content-Type': 'application/json' },
+      });
+    }
+
+    // ── 커스텀 타이틀 저장 ──
+    if (url.pathname === '/jira-proxy/custom-titles' && request.method === 'POST') {
+      try {
+        const titles = await request.json();
+        await env.PD_KV.put('custom_titles', JSON.stringify(titles));
+        return new Response(JSON.stringify({ ok: true }), {
+          headers: { ...CORS_HEADERS, 'Content-Type': 'application/json' },
+        });
+      } catch (e) {
+        return new Response(JSON.stringify({ ok: false, error: String(e) }), {
+          status: 500, headers: { ...CORS_HEADERS, 'Content-Type': 'application/json' },
+        });
+      }
+    }
+
     // ── 예정 업무 조회 ──
     if (url.pathname === '/jira-proxy/planned' && request.method === 'GET') {
       const data = await env.PD_KV.get('planned_items');
