@@ -22,7 +22,7 @@ const COL_STATUS_W = 78;
 // ── 타입 칩 설정 ───────────────────────────────────────────────
 const TYPE_CFG: Record<string, { bg: string; color: string; label: string }> = {
   Initiative: { bg: '#ede9fe', color: '#7c3aed', label: 'Initiative' },
-  Epic:       { bg: '#ccfbf1', color: '#0d9488', label: 'Epic' },
+  Epic:       { bg: '#fff7ed', color: '#c2410c', label: 'Epic' },
   Design:     { bg: '#e0e7ff', color: '#4338ca', label: 'Design' },
   Task:       { bg: '#f1f5f9', color: '#475569', label: 'Task' },
   Story:      { bg: '#d1fae5', color: '#065f46', label: 'Story' },
@@ -54,7 +54,7 @@ const CAT_COLOR: Record<string, string> = {
 // Initiative/Epic 별 바 색상
 const ISSUE_BAR_COLOR: Record<string, string> = {
   Initiative: '#7c3aed',
-  Epic: '#0d9488',
+  Epic: '#c2410c',
   Design: '#db2777',
   Story: '#059669',
   Bug: '#dc2626',
@@ -80,7 +80,7 @@ function TypeChip({ type }: { type?: string }) {
   const cfg = type ? TYPE_CFG[type] : undefined;
   const c = cfg ?? { bg: '#f1f5f9', color: '#64748b', label: type ?? '—' };
   return (
-    <span className="inline-flex items-center rounded px-1.5 py-0.5 text-[10px] font-semibold whitespace-nowrap leading-none"
+    <span className="inline-flex items-center rounded px-1.5 py-0.5 text-[10px] font-medium whitespace-nowrap leading-none"
       style={{ background: c.bg, color: c.color }}>
       {c.label.length > 8 ? c.label.slice(0, 6) + '…' : c.label}
     </span>
@@ -90,7 +90,7 @@ function TypeChip({ type }: { type?: string }) {
 function StatusChip({ status }: { status: GanttItem['status'] }) {
   const c = STATUS_CFG[status] ?? STATUS_CFG.todo;
   return (
-    <span className="inline-flex items-center rounded px-1.5 py-0.5 text-[10px] font-semibold whitespace-nowrap leading-none"
+    <span className="inline-flex items-center rounded px-1.5 py-0.5 text-[10px] font-medium whitespace-nowrap leading-none"
       style={{ background: c.bg, color: c.color }}>
       {c.label}
     </span>
