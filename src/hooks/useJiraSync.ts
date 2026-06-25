@@ -312,6 +312,7 @@ async function syncTiered(
       jiraUrl: `https://${settings.baseUrl}/browse/${issue.key}`,
       issueType: issue.fields.issuetype.name,
       noDates: !startDate || !endDate,
+      labels: (issue.fields.labels as string[] | undefined) ?? [],
     });
     seen.add(id);
   }
