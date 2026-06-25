@@ -43,8 +43,8 @@ const STATUS_CFG: Record<GanttItem['status'], { bg: string; color: string; label
 const BAR_COLOR: Record<GanttItem['status'], string> = {
   todo:        '#a5b4fc',
   in_progress: '#6366f1',
-  done:        '#d1d5db',
-  hold:        '#d1d5db',
+  done:        '#9ca3af',
+  hold:        '#9ca3af',
 };
 const CAT_COLOR: Record<string, string> = {
   '휴가': '#f97316', '교육': '#a855f7', '기타': '#6b7280', 'QA': '#0d9488',
@@ -623,13 +623,13 @@ const GanttChart = forwardRef<GanttChartHandle, Props>(function GanttChart(
 
                   return (
                     <div key={item.id}
-                      className={`absolute rounded flex items-center text-white text-[10px] font-medium overflow-hidden
+                      className={`absolute rounded flex items-center text-[10px] font-medium overflow-hidden
                         transition-shadow ${dragging ? 'opacity-75 shadow-xl z-20' : 'z-5 hover:shadow-md'}
                         ${isP ? 'cursor-grab' : 'cursor-pointer'}`}
                       style={{
                         left, top, width, height: BAR_H,
                         background: color,
-                        opacity: item.status === 'done' ? 0.55 : 1,
+                        color: item.status === 'done' || item.status === 'hold' ? '#6b7280' : '#fff',
                         border: isP ? `1.5px dashed ${color}` : 'none',
                         boxSizing: 'border-box',
                       }}
