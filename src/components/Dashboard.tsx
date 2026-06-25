@@ -166,6 +166,7 @@ export default function Dashboard({ items, members, jiraSettings, onSync, syncLo
   const [selectedQ, setSelectedQ] = useState<string>(defaultQ);
   const [selectedMemberId, setSelectedMemberId] = useState<string | null>(null);
   const [listFilters, setListFilters] = useState<ListFilterKey[]>([]);
+  const [filterStatuses, setFilterStatuses] = useState<GanttItem['status'][]>(['todo', 'in_progress']);
 
   // 일정 초과: 미완료인데 endDate가 오늘 이전
   const overdueItems = useMemo(() =>
@@ -239,10 +240,11 @@ export default function Dashboard({ items, members, jiraSettings, onSync, syncLo
     if (selectedQ !== 'all') {
       base = base.filter(i => itemOverlapsQuarter(i, selectedQ));
     }
-    // DONE 티켓 항상 미노출 (날짜 유무 무관)
-    base = base.filter(i => i.status !== 'done');
+    if (filterStatuses.length > 0) {
+      base = base.filter(i => i.noDates || filterStatuses.includes(i.status));
+    }
     return base;
-  }, [listFilters, overdueItems, noDatesItems, plannedItems, selectedMemberId, items, selectedQ]);
+  }, [listFilters, overdueItems, noDatesItems, plannedItems, selectedMemberId, items, selectedQ, filterStatuses]);
 
   const selectedMember = activeMembers.find(m => m.id === selectedMemberId) ?? null;
 
@@ -333,7 +335,7 @@ export default function Dashboard({ items, members, jiraSettings, onSync, syncLo
           let ji = selectedQ === 'all'
             ? allJi
             : allJi.filter(i => itemOverlapsQuarter(i, selectedQ));
-          // 쿼터 필터만 적용 (상태 필터 없음)
+          if (filterStatuses.length > 0) ji = ji.filter(i => filterStatuses.includes(i.status));
 
           const done     = ji.filter(i => i.status === 'done').length;
           const doneRate = ji.length > 0 ? Math.round((done / ji.length) * 100) : 0;
