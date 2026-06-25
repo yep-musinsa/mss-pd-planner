@@ -7,6 +7,10 @@ const CORS_HEADERS = {
   'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
 };
 
+const ADMIN_EMAIL = 'ye.park@musinsa.com';
+const ACCESS_LOG_KEY = 'access_log';
+const MAX_LOG_ENTRIES = 500;
+
 export default {
   async fetch(request, env) {
     if (request.method === 'OPTIONS') {
@@ -35,6 +39,44 @@ export default {
     if (url.pathname === '/jira-proxy/admin/token-status' && request.method === 'GET') {
       const token = await env.PD_KV.get('jira_token');
       return new Response(JSON.stringify({ configured: !!token }), {
+        headers: { ...CORS_HEADERS, 'Content-Type': 'application/json' },
+      });
+    }
+
+    // ── 접속 로그 기록 ──
+    if (url.pathname === '/jira-proxy/access-log' && request.method === 'POST') {
+      try {
+        const body = await request.json();
+        const existing = await env.PD_KV.get(ACCESS_LOG_KEY);
+        const logs = existing ? JSON.parse(existing) : [];
+        logs.unshift({
+          email: body.email ?? '',
+          name: body.name ?? '',
+          time: new Date().toISOString(),
+          ua: request.headers.get('User-Agent') ?? '',
+        });
+        if (logs.length > MAX_LOG_ENTRIES) logs.splice(MAX_LOG_ENTRIES);
+        await env.PD_KV.put(ACCESS_LOG_KEY, JSON.stringify(logs));
+        return new Response(JSON.stringify({ ok: true }), {
+          headers: { ...CORS_HEADERS, 'Content-Type': 'application/json' },
+        });
+      } catch (e) {
+        return new Response(JSON.stringify({ ok: false }), {
+          status: 500, headers: { ...CORS_HEADERS, 'Content-Type': 'application/json' },
+        });
+      }
+    }
+
+    // ── 접속 로그 조회 (어드민 전용) ──
+    if (url.pathname === '/jira-proxy/access-log' && request.method === 'GET') {
+      const requester = url.searchParams.get('email');
+      if (requester !== ADMIN_EMAIL) {
+        return new Response(JSON.stringify({ error: 'Forbidden' }), {
+          status: 403, headers: { ...CORS_HEADERS, 'Content-Type': 'application/json' },
+        });
+      }
+      const data = await env.PD_KV.get(ACCESS_LOG_KEY);
+      return new Response(data ?? '[]', {
         headers: { ...CORS_HEADERS, 'Content-Type': 'application/json' },
       });
     }

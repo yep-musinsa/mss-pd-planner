@@ -31,6 +31,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   function login(u: AuthUser) {
     setUser(u);
     localStorage.setItem(AUTH_KEY, JSON.stringify(u));
+    // 접속 로그 기록 (fire-and-forget)
+    const base = window.location.hostname === 'localhost'
+      ? '/jira-proxy'
+      : 'https://pd-planner-proxy.yep-musinsa.workers.dev/jira-proxy';
+    fetch(`${base}/access-log`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: u.email, name: u.name }),
+    }).catch(() => {});
   }
 
   function logout() {
