@@ -43,7 +43,7 @@ const STATUS_CFG: Record<GanttItem['status'], { bg: string; color: string; label
 const BAR_COLOR: Record<GanttItem['status'], string> = {
   todo:        '#94a3b8',
   in_progress: '#3b82f6',
-  done:        '#22c55e',
+  done:        '#cbd5e1',
   hold:        '#f59e0b',
 };
 const CAT_COLOR: Record<string, string> = {
@@ -63,16 +63,6 @@ const ISSUE_BAR_COLOR: Record<string, string> = {
 
 function getBarColor(item: GanttItem): string {
   if (item.type === 'planned') return CAT_COLOR[item.category ?? ''] ?? '#94a3b8';
-  if (item.issueType === 'Design') {
-    if (item.status === 'in_progress') return '#6366f1';
-    if (item.status === 'todo')        return '#a5b4fc';
-  }
-  if (item.issueType === 'Epic') {
-    if (item.status === 'in_progress') return '#fb923c';
-    if (item.status === 'done')        return '#22c55e';
-    return '#fed7aa';
-  }
-  if (item.issueType && ISSUE_BAR_COLOR[item.issueType]) return ISSUE_BAR_COLOR[item.issueType];
   return BAR_COLOR[item.status] ?? '#94a3b8';
 }
 
