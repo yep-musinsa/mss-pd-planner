@@ -229,6 +229,7 @@ function AppInner({ isAdmin, logout }: { isAdmin: boolean; logout: () => void })
   const [syncFlash, setSyncFlash] = useState(false);
   const [ganttAllCollapsed, setGanttAllCollapsed] = useState(false);
   const [ganttGroupBy, setGanttGroupBy] = useState<'member' | 'initiative'>('member');
+  const prevGroupBy = useRef<'member' | 'initiative'>('member');
   const [customTitles, setCustomTitles] = useState<Record<string, string>>(loadCustomTitles);
   const { sync: jiraSync, loading: jiraSyncLoading } = useJiraSync();
 
@@ -372,6 +373,14 @@ function AppInner({ isAdmin, logout }: { isAdmin: boolean; logout: () => void })
   }
 
   // 앱 로드 시 자동 동기화 + 1시간마다 주기적 동기화
+  // 이니셔티브별 탭 전환 시 Today로 스크롤
+  useEffect(() => {
+    if (ganttGroupBy === 'initiative' && prevGroupBy.current !== 'initiative') {
+      setTimeout(() => initiativeRef.current?.scrollToToday(), 50);
+    }
+    prevGroupBy.current = ganttGroupBy;
+  }, [ganttGroupBy]);
+
   useEffect(() => {
     const IS_LOCAL = window.location.hostname === 'localhost';
     if (IS_LOCAL && !jiraSettings.apiToken) return;
