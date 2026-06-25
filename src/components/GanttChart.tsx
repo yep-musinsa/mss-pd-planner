@@ -22,7 +22,7 @@ const COL_STATUS_W = 78;
 // ── 타입 칩 설정 ───────────────────────────────────────────────
 const TYPE_CFG: Record<string, { bg: string; color: string; label: string }> = {
   Initiative: { bg: '#ede9fe', color: '#7c3aed', label: 'Initiative' },
-  Epic:       { bg: '#fff7ed', color: '#c2410c', label: 'Epic' },
+  Epic:       { bg: '#fff7ed', color: '#ea580c', label: 'Epic' },
   Design:     { bg: '#e0e7ff', color: '#4338ca', label: 'Design' },
   Task:       { bg: '#f1f5f9', color: '#475569', label: 'Task' },
   Story:      { bg: '#d1fae5', color: '#065f46', label: 'Story' },
@@ -54,7 +54,7 @@ const CAT_COLOR: Record<string, string> = {
 // Initiative/Epic 별 바 색상
 const ISSUE_BAR_COLOR: Record<string, string> = {
   Initiative: '#7c3aed',
-  Epic: '#c2410c',
+  Epic: '#f97316',
   Design: '#db2777',
   Story: '#059669',
   Bug: '#dc2626',
@@ -68,8 +68,8 @@ function getBarColor(item: GanttItem): string {
     if (item.status === 'todo')        return '#a5b4fc';
   }
   if (item.issueType === 'Epic') {
-    if (item.status === 'in_progress') return '#c2410c';
-    if (item.status === 'todo')        return '#fdba74';
+    if (item.status === 'in_progress') return '#f97316';
+    if (item.status === 'todo')        return '#fed7aa';
   }
   if (item.issueType && ISSUE_BAR_COLOR[item.issueType]) return ISSUE_BAR_COLOR[item.issueType];
   return BAR_COLOR[item.status] ?? '#94a3b8';

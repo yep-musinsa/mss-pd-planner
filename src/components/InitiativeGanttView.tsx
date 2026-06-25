@@ -36,7 +36,7 @@ const STATUS_CFG: Record<string, { bg: string; color: string; label: string }> =
 
 const TYPE_CFG: Record<string, { bg: string; color: string; label: string }> = {
   Initiative: { bg: '#ede9fe', color: '#7c3aed', label: 'Initiative' },
-  Epic:       { bg: '#fff7ed', color: '#c2410c', label: 'Epic' },
+  Epic:       { bg: '#fff7ed', color: '#ea580c', label: 'Epic' },
   Design:     { bg: '#e0e7ff', color: '#4338ca', label: 'Design' },
   Task:       { bg: '#f1f5f9', color: '#475569', label: 'Task' },
   Story:      { bg: '#d1fae5', color: '#065f46', label: 'Story' },
@@ -46,7 +46,7 @@ const TYPE_CFG: Record<string, { bg: string; color: string; label: string }> = {
 
 const BAR_OVERRIDE: Record<string, string> = {
   Initiative: '#7c3aed',
-  Epic:       '#0d9488',
+  Epic:       '#f97316',
   Design:     '#6366f1',
 };
 
