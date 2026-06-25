@@ -532,15 +532,15 @@ export default function Dashboard({ items, members, jiraSettings, onSync, syncLo
                 {item.epicName && <span className="text-[10px] text-gray-400 block truncate">{item.epicName}</span>}
               </td>
               <td className="px-3 py-2.5 whitespace-nowrap" style={{ color: item.noDates ? '#f59e0b' : STATUS_COLOR[item.status] }}>
-                {item.noDates ? '일정 미기입' : STATUS_LABEL[item.status]}
+                {item.noDates
+                  ? (item.status === 'hold' ? 'Hold' : '일정 미기입')
+                  : STATUS_LABEL[item.status]}
               </td>
               <td className="px-3 py-2.5 text-right text-gray-700 whitespace-nowrap">
                 {md !== null ? `${md}d` : <span className="text-gray-300">—</span>}
               </td>
-              <td className="px-3 py-2.5 whitespace-nowrap">
-                {item.noDates && item.status === 'hold'
-                  ? <span className="text-amber-500 font-medium text-xs">Hold</span>
-                  : <span className="text-gray-400">{item.noDates ? '—' : item.startDate}</span>}
+              <td className="px-3 py-2.5 text-gray-400 whitespace-nowrap">
+                {item.noDates ? '—' : item.startDate}
               </td>
               <td className="px-3 py-2.5 text-gray-400 whitespace-nowrap">
                 {item.noDates ? '—' : item.endDate}
