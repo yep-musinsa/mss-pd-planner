@@ -145,7 +145,7 @@ function itemOverlapsQuarter(item: GanttItem, q: string): boolean {
 }
 
 const STATUS_COLOR: Record<GanttItem['status'], string> = {
-  todo: '#94a3b8', in_progress: '#6366f1', done: '#22c55e', hold: '#f59e0b',
+  todo: '#94a3b8', in_progress: '#6366f1', done: '#22c55e', hold: '#94a3b8',
 };
 const STATUS_LABEL: Record<GanttItem['status'], string> = {
   todo: 'SUGGESTED', in_progress: 'In Progress', done: 'Done', hold: 'Hold',
