@@ -22,7 +22,7 @@ const COL_STATUS_W = 78;
 // ── 타입 칩 설정 ───────────────────────────────────────────────
 const TYPE_CFG: Record<string, { bg: string; color: string; label: string }> = {
   Initiative: { bg: '#ede9fe', color: '#7c3aed', label: 'Initiative' },
-  Epic:       { bg: '#fff7ed', color: '#ea580c', label: 'Epic' },
+  Epic:       { bg: '#fff7ed', color: '#fb923c', label: 'Epic' },
   Design:     { bg: '#e0e7ff', color: '#4338ca', label: 'Design' },
   Task:       { bg: '#f1f5f9', color: '#475569', label: 'Task' },
   Story:      { bg: '#d1fae5', color: '#065f46', label: 'Story' },
@@ -68,8 +68,9 @@ function getBarColor(item: GanttItem): string {
     if (item.status === 'todo')        return '#a5b4fc';
   }
   if (item.issueType === 'Epic') {
-    if (item.status === 'in_progress') return '#f97316';
-    if (item.status === 'todo')        return '#fed7aa';
+    if (item.status === 'in_progress') return '#fb923c';
+    if (item.status === 'done')        return '#22c55e';
+    return '#fed7aa';
   }
   if (item.issueType && ISSUE_BAR_COLOR[item.issueType]) return ISSUE_BAR_COLOR[item.issueType];
   return BAR_COLOR[item.status] ?? '#94a3b8';
