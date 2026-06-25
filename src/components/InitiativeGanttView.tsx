@@ -132,15 +132,12 @@ const InitiativeGanttView = forwardRef<GanttChartHandle, Props>(function Initiat
       map.get(groupKey)!.epics.push({ epic, tasks: taskItems.filter(t => t.epicName === epic.title) });
     }
 
-    // 독립 Initiative (Epic 없는 것)
-    for (const init of initItems) {
-      const groupKey = init.jiraKey ?? init.title;
-      if (!map.has(groupKey)) {
-        map.set(groupKey, { key: groupKey, name: init.title, item: init, epics: [] });
-      }
-    }
-
-    return Array.from(map.values());
+    // PD 라벨 있고 PD- 키 Epic이 있는 그룹만 노출
+    return Array.from(map.values()).filter(group => {
+      const hasPdLabel = group.item?.labels?.some(l => l.toUpperCase() === 'PD') ?? false;
+      const hasPdEpic  = group.epics.some(eg => eg.epic.jiraKey?.toUpperCase().startsWith('PD-'));
+      return hasPdLabel && hasPdEpic;
+    });
   }, [items]);
 
   // ── 행 목록 (top 누적) ──────────────────────────────────────

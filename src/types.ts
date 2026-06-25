@@ -25,6 +25,7 @@ export interface GanttItem {
   jiraUrl?: string;
   epicName?: string;
   initiativeKey?: string; // Epic이 속한 Initiative의 jiraKey
+  labels?: string[];      // Jira 라벨 (Initiative 전용)
   issueType?: string;
   // 예정 업무 전용
   note?: string;
