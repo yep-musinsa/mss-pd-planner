@@ -263,7 +263,7 @@ const GanttChart = forwardRef<GanttChartHandle, Props>(function GanttChart(
       const memberItems = items.filter(i => i.memberId === member.id && i.issueType !== 'Initiative');
       return { member, memberItems, height: MEMBER_ROW_H + Math.max(memberItems.length, 1) * ROW_H };
     });
-    const unassigned = items.filter(i => (i.memberId === 'unassigned' || !i.memberId) && i.issueType !== 'Initiative');
+    const unassigned = items.filter(i => i.memberId === 'unassigned' || !i.memberId);
     if (unassigned.length > 0) {
       result.push({
         member: { id: 'unassigned', name: '미정', color: '#94a3b8', email: '', active: true },
