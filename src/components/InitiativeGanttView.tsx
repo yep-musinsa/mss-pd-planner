@@ -300,7 +300,7 @@ const InitiativeGanttView = forwardRef<GanttChartHandle, Props>(function Initiat
       return (
         <div key={`l-epic-${epic.id}`}
           className="flex items-center border-b border-gray-100 cursor-pointer hover:bg-orange-50/40 transition-colors"
-          style={{ height: EPIC_H, background: '#f9fffe' }}
+          style={{ height: EPIC_H, background: '#fffaf7' }}
           onClick={() => onClickItem(epic)}>
           <div style={{ width: COL_KEY, flexShrink: 0 }} className="pl-5 pr-2">
             {epic.jiraKey && (
