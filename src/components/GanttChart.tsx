@@ -54,7 +54,7 @@ const CAT_COLOR: Record<string, string> = {
 // Initiative/Epic 별 바 색상
 const ISSUE_BAR_COLOR: Record<string, string> = {
   Initiative: '#7c3aed',
-  Epic: '#f97316',
+  Epic: '#fb923c',
   Design: '#db2777',
   Story: '#059669',
   Bug: '#dc2626',
