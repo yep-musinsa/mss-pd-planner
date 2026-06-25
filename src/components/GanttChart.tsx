@@ -68,8 +68,8 @@ function getBarColor(item: GanttItem): string {
     if (item.status === 'todo')        return '#a5b4fc';
   }
   if (item.issueType === 'Epic') {
-    if (item.status === 'in_progress') return '#0d9488';
-    if (item.status === 'todo')        return '#a7c5c2';
+    if (item.status === 'in_progress') return '#c2410c';
+    if (item.status === 'todo')        return '#fdba74';
   }
   if (item.issueType && ISSUE_BAR_COLOR[item.issueType]) return ISSUE_BAR_COLOR[item.issueType];
   return BAR_COLOR[item.status] ?? '#94a3b8';
