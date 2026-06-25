@@ -19,22 +19,6 @@ export default {
 
     const url = new URL(request.url);
 
-    // ── 관리자 토큰 저장 ──
-    if (url.pathname === '/jira-proxy/admin/save-token' && request.method === 'POST') {
-      try {
-        const body = await request.json();
-        if (body.email) await env.PD_KV.put('jira_email', body.email);
-        if (body.token) await env.PD_KV.put('jira_token', body.token);
-        return new Response(JSON.stringify({ ok: true }), {
-          headers: { ...CORS_HEADERS, 'Content-Type': 'application/json' },
-        });
-      } catch (e) {
-        return new Response(JSON.stringify({ ok: false, error: String(e) }), {
-          status: 500, headers: { ...CORS_HEADERS, 'Content-Type': 'application/json' },
-        });
-      }
-    }
-
     // ── 토큰 설정 여부 확인 ──
     if (url.pathname === '/jira-proxy/admin/token-status' && request.method === 'GET') {
       const token = await env.PD_KV.get('jira_token');

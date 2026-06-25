@@ -1,6 +1,6 @@
 import { useState, useMemo, useRef, useEffect } from 'react';
 import {
-  addMonths, subMonths, addWeeks, subWeeks,
+  addMonths, subMonths,
   startOfMonth, endOfMonth, format,
 } from 'date-fns';
 import { ko } from 'date-fns/locale';
@@ -16,7 +16,7 @@ import Dashboard from './components/Dashboard';
 import AddPlanModal from './components/AddPlanModal';
 import ItemDetailPanel from './components/ItemDetailPanel';
 import MemberManager from './components/MemberManager';
-import JiraSettingsPanel, { loadJiraSettings } from './components/JiraSettingsPanel';
+import JiraSettingsPanel, { loadJiraSettings, saveJiraSettings } from './components/JiraSettingsPanel';
 import AccessLogView from './components/AccessLogView';
 import { useJiraSync } from './hooks/useJiraSync';
 import { useAuth } from './contexts/AuthContext';
@@ -73,24 +73,15 @@ function generateId() {
 }
 
 // ── zoom 설정 ──────────────────────────────────────────────────
-type GanttZoom = 'week' | 'month' | 'quarter' | 'year';
+type GanttZoom = 'month' | 'quarter' | 'year';
 
 const ZOOM_COL_W: Record<GanttZoom, number> = {
-  week: 44, month: 28, quarter: 7, year: 4,
+  month: 28, quarter: 7, year: 4,
 };
 
 function calcViewRange(center: Date, zoom: GanttZoom): { viewStart: Date; viewEnd: Date } {
   switch (zoom) {
-    case 'week':
-      return {
-        viewStart: startOfMonth(subMonths(center, 6)),
-        viewEnd: endOfMonth(addMonths(center, 18)),
-      };
     case 'month':
-      return {
-        viewStart: startOfMonth(subMonths(center, 6)),
-        viewEnd: endOfMonth(addMonths(center, 18)),
-      };
     case 'quarter':
       return {
         viewStart: startOfMonth(subMonths(center, 6)),
@@ -106,7 +97,6 @@ function calcViewRange(center: Date, zoom: GanttZoom): { viewStart: Date; viewEn
 
 function navDelta(zoom: GanttZoom, dir: 1 | -1): (d: Date) => Date {
   switch (zoom) {
-    case 'week':    return d => dir === 1 ? addWeeks(d, 1) : subWeeks(d, 1);
     case 'month':   return d => dir === 1 ? addMonths(d, 1) : subMonths(d, 1);
     case 'quarter': return d => dir === 1 ? addMonths(d, 3) : subMonths(d, 3);
     case 'year':    return d => dir === 1 ? addMonths(d, 12) : subMonths(d, 12);
@@ -222,7 +212,6 @@ export default function App() {
   return <AppInner isAdmin={isAdmin} logout={logout} />;
 }
 
-import type { AuthUser } from './contexts/AuthContext';
 
 function AppInner({ isAdmin, logout }: { isAdmin: boolean; logout: () => void }) {
   const { user } = useAuth();
@@ -278,12 +267,6 @@ function AppInner({ isAdmin, logout }: { isAdmin: boolean; logout: () => void })
   const memberOptions = useMemo<DropOpt[]>(() =>
     activeMembers.map(m => ({ value: m.id, label: m.name, avatar: m.avatar, color: m.color })),
     [activeMembers]
-  );
-
-  // 일정 미기입 카운트
-  const noDatesCount = useMemo(
-    () => items.filter(i => i.type === 'jira' && i.noDates).length,
-    [items]
   );
 
   const statusOptions = useMemo<DropOpt[]>(() => [
@@ -359,7 +342,7 @@ function AppInner({ isAdmin, logout }: { isAdmin: boolean; logout: () => void })
       const now = new Date().toISOString();
       const updated = { ...jiraSettings, lastSynced: now };
       setJiraSettings(updated);
-      localStorage.setItem('pd-planner-jira', JSON.stringify(updated));
+      saveJiraSettings(updated);
       handleJiraSyncComplete(synced);
     }
   }
@@ -423,9 +406,6 @@ function AppInner({ isAdmin, logout }: { isAdmin: boolean; logout: () => void })
     }, 80);
   }
 
-  const plannedCount = plannedItems.length;
-  const jiraCount    = jiraItems.length;
-
   const NAV_ITEMS = [
     { v: 'dashboard' as ViewMode, label: '리소스 요약', Icon: LayoutDashboard },
     { v: 'gantt'     as ViewMode, label: '타임라인',  Icon: Calendar },
@@ -435,7 +415,7 @@ function AppInner({ isAdmin, logout }: { isAdmin: boolean; logout: () => void })
   ];
 
   const ZOOM_LABELS: Record<GanttZoom, string> = {
-    week: 'Week', month: 'Month', quarter: 'Quarter', year: 'Year',
+    month: 'Month', quarter: 'Quarter', year: 'Year',
   };
 
   return (
