@@ -304,7 +304,7 @@ async function syncTiered(
       id,
       type: 'jira',
       title: issue.fields.summary,
-      memberId: member ? member.id : 'unassigned',
+      memberId: member ? member.id : '__initiative_only__',
       startDate: startDate || today,
       endDate: endDate || today,
       status: STATUS_MAP[issue.fields.status.name] ?? 'todo',
