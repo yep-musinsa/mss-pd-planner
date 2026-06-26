@@ -15,7 +15,7 @@ const EPIC_H = 34;
 const TASK_H = 32;
 
 // ── 왼쪽 패널 컬럼 너비 ───────────────────────────────────────
-const COL_KEY      = 70;
+const COL_KEY      = 96;
 const COL_TYPE     = 58;
 const COL_STATUS   = 78;
 const COL_DATE     = 66;
