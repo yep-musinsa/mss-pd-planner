@@ -63,7 +63,15 @@ const ISSUE_BAR_COLOR: Record<string, string> = {
 
 function getBarColor(item: GanttItem): string {
   if (item.type === 'planned') return CAT_COLOR[item.category ?? ''] ?? '#94a3b8';
-  return BAR_COLOR[item.status] ?? '#94a3b8';
+  if (item.status === 'done' || item.status === 'hold') return '#94a3b8';
+  if (item.issueType === 'Design') {
+    return item.status === 'in_progress' ? '#6366f1' : '#a5b4fc';
+  }
+  if (item.issueType === 'Epic') {
+    return item.status === 'in_progress' ? '#fb923c' : '#fed7aa';
+  }
+  // Task, Story, Sub-task 등 기본
+  return item.status === 'in_progress' ? '#60a5fa' : '#bfdbfe';
 }
 
 // ── 미니 컴포넌트 ──────────────────────────────────────────────

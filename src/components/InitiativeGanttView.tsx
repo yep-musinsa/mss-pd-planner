@@ -51,16 +51,15 @@ const BAR_OVERRIDE: Record<string, string> = {
 };
 
 function getBarColor(item: GanttItem): string {
+  if (item.status === 'done' || item.status === 'hold') return '#94a3b8';
   if (item.issueType === 'Epic') {
-    if (item.status === 'in_progress') return '#fb923c';
-    if (item.status === 'done')        return '#22c55e';
-    return '#fed7aa';
+    return item.status === 'in_progress' ? '#fb923c' : '#fed7aa';
   }
-  if (item.issueType && BAR_OVERRIDE[item.issueType]) return BAR_OVERRIDE[item.issueType];
-  return item.status === 'done' ? '#22c55e'
-    : item.status === 'hold'       ? '#f59e0b'
-    : item.status === 'in_progress'? '#3b82f6'
-    : '#94a3b8';
+  if (item.issueType === 'Design') {
+    return item.status === 'in_progress' ? '#6366f1' : '#a5b4fc';
+  }
+  // Task, Story, Sub-task 등 기본
+  return item.status === 'in_progress' ? '#60a5fa' : '#bfdbfe';
 }
 
 function fmtDate(d: string) { return d.slice(5).replace('-', '/'); }
