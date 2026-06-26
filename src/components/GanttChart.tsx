@@ -64,6 +64,9 @@ const ISSUE_BAR_COLOR: Record<string, string> = {
 function getBarColor(item: GanttItem): string {
   if (item.type === 'planned') return CAT_COLOR[item.category ?? ''] ?? '#94a3b8';
   if (item.status === 'done' || item.status === 'hold') return '#94a3b8';
+  if (item.issueType === 'Initiative') {
+    return item.status === 'in_progress' ? '#8b5cf6' : '#ddd6fe';
+  }
   if (item.issueType === 'Design') {
     return item.status === 'in_progress' ? '#6366f1' : '#a5b4fc';
   }
@@ -71,7 +74,7 @@ function getBarColor(item: GanttItem): string {
     return item.status === 'in_progress' ? '#fb923c' : '#fed7aa';
   }
   // Task, Story, Sub-task 등 기본
-  return item.status === 'in_progress' ? '#60a5fa' : '#bfdbfe';
+  return item.status === 'in_progress' ? '#3b82f6' : '#bfdbfe';
 }
 
 // ── 미니 컴포넌트 ──────────────────────────────────────────────
@@ -637,7 +640,7 @@ const GanttChart = forwardRef<GanttChartHandle, Props>(function GanttChart(
                       style={{
                         left, top, width, height: BAR_H,
                         background: color,
-                        color: item.status === 'done' || item.status === 'hold' ? '#6b7280' : '#fff',
+                        color: item.status === 'done' || item.status === 'hold' ? '#e2e8f0' : '#fff',
                         border: isP ? `1.5px dashed ${color}` : 'none',
                         boxSizing: 'border-box',
                       }}

@@ -52,6 +52,9 @@ const BAR_OVERRIDE: Record<string, string> = {
 
 function getBarColor(item: GanttItem): string {
   if (item.status === 'done' || item.status === 'hold') return '#94a3b8';
+  if (item.issueType === 'Initiative') {
+    return item.status === 'in_progress' ? '#8b5cf6' : '#ddd6fe';
+  }
   if (item.issueType === 'Epic') {
     return item.status === 'in_progress' ? '#fb923c' : '#fed7aa';
   }
@@ -59,7 +62,7 @@ function getBarColor(item: GanttItem): string {
     return item.status === 'in_progress' ? '#6366f1' : '#a5b4fc';
   }
   // Task, Story, Sub-task 등 기본
-  return item.status === 'in_progress' ? '#60a5fa' : '#bfdbfe';
+  return item.status === 'in_progress' ? '#3b82f6' : '#bfdbfe';
 }
 
 function fmtDate(d: string) { return d.slice(5).replace('-', '/'); }
@@ -550,7 +553,7 @@ const InitiativeGanttView = forwardRef<GanttChartHandle, Props>(function Initiat
                     style={{ left: l, top: row.top + (EPIC_H - 14) / 2, width: w, height: 14, background: getBarColor(epic), opacity: 0.88 }}
                     onClick={() => onClickItem(epic)}>
                     <div className="absolute inset-0 flex items-center px-1.5">
-                      <span className="text-white text-[9px] font-medium truncate">{epic.title}</span>
+                      <span className="text-[9px] font-medium truncate" style={{ color: (epic.status === 'done' || epic.status === 'hold') ? '#e2e8f0' : '#fff' }}>{epic.title}</span>
                     </div>
                   </div>
                 );
