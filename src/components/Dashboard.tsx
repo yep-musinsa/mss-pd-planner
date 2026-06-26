@@ -240,11 +240,8 @@ export default function Dashboard({ items, members, jiraSettings, onSync, syncLo
     if (selectedQ !== 'all') {
       base = base.filter(i => itemOverlapsQuarter(i, selectedQ));
     }
-    if (filterStatuses.length > 0) {
-      base = base.filter(i => i.noDates || filterStatuses.includes(i.status));
-    }
-    // 일정 없는 완료 건 미노출
-    base = base.filter(i => !(i.noDates && i.status === 'done'));
+    // DONE 미노출, 일정 미기입+완료도 미노출
+    base = base.filter(i => i.status !== 'done');
     return base;
   }, [listFilters, overdueItems, noDatesItems, plannedItems, selectedMemberId, items, selectedQ, filterStatuses]);
 
@@ -334,10 +331,9 @@ export default function Dashboard({ items, members, jiraSettings, onSync, syncLo
           const allJi = items.filter(i => i.memberId === member.id && i.type === 'jira' && !i.noDates);
           const noDates = items.filter(i => i.memberId === member.id && i.noDates);
 
-          let ji = selectedQ === 'all'
+          const ji = selectedQ === 'all'
             ? allJi
             : allJi.filter(i => itemOverlapsQuarter(i, selectedQ));
-          if (filterStatuses.length > 0) ji = ji.filter(i => filterStatuses.includes(i.status));
 
           const done     = ji.filter(i => i.status === 'done').length;
           const doneRate = ji.length > 0 ? Math.round((done / ji.length) * 100) : 0;
