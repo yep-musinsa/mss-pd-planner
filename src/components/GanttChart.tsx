@@ -9,7 +9,12 @@ import type { GanttItem, Member } from '../types';
 // ── 레이아웃 상수 ──────────────────────────────────────────────
 const ROW_H = 36;
 const MEMBER_ROW_H = 42;
+const EPIC_HEADER_H = 28;
 const BAR_H = 22;
+
+type EpicFlatRow =
+  | { kind: 'epic-header'; epicName: string; itemCount: number }
+  | { kind: 'item'; item: GanttItem; topOffset: number };
 const RESIZE_HANDLE_W = 8;
 
 const LEFT_W_DEFAULT = 390;
@@ -259,18 +264,51 @@ const GanttChart = forwardRef<GanttChartHandle, Props>(function GanttChart(
     if (src === 'right' && leftPanelRef.current)   leftPanelRef.current.scrollTop   = top;
   }
 
-  // 멤버별 섹션 구성
+  // 멤버별 섹션 구성 (에픽 그루핑)
   const sections = useMemo(() => {
+    function buildFlatRows(memberItems: GanttItem[]): { flatRows: EpicFlatRow[]; contentH: number } {
+      const grouped = new Map<string, GanttItem[]>();
+      const noEpic: GanttItem[] = [];
+      for (const item of memberItems) {
+        if (item.epicName) {
+          if (!grouped.has(item.epicName)) grouped.set(item.epicName, []);
+          grouped.get(item.epicName)!.push(item);
+        } else {
+          noEpic.push(item);
+        }
+      }
+      const flatRows: EpicFlatRow[] = [];
+      let contentH = 0;
+      const addGroup = (epicName: string, epicItems: GanttItem[]) => {
+        flatRows.push({ kind: 'epic-header', epicName, itemCount: epicItems.length });
+        contentH += EPIC_HEADER_H;
+        for (const item of epicItems) {
+          flatRows.push({ kind: 'item', item, topOffset: MEMBER_ROW_H + contentH });
+          contentH += ROW_H;
+        }
+      };
+      for (const [name, epicItems] of grouped) addGroup(name, epicItems);
+      if (noEpic.length > 0) addGroup('미분류', noEpic);
+      if (flatRows.length === 0) contentH = ROW_H;
+      return { flatRows, contentH };
+    }
+
     const result = activeMembers.map(member => {
       const memberItems = items.filter(i => i.memberId === member.id && i.issueType !== 'Initiative');
-      return { member, memberItems, height: MEMBER_ROW_H + Math.max(memberItems.length, 1) * ROW_H };
+      const { flatRows, contentH } = buildFlatRows(memberItems);
+      return { member, memberItems, flatRows, height: MEMBER_ROW_H + contentH };
     });
+
     const unassigned = items.filter(i => i.memberId === 'unassigned' || !i.memberId);
     if (unassigned.length > 0) {
+      const flatRows: EpicFlatRow[] = unassigned.map((item, idx) => ({
+        kind: 'item' as const, item, topOffset: MEMBER_ROW_H + idx * ROW_H,
+      }));
       result.push({
         member: { id: 'unassigned', name: '미정', color: '#94a3b8', email: '', active: true },
         memberItems: unassigned,
-        height: MEMBER_ROW_H + unassigned.length * ROW_H,
+        flatRows,
+        height: MEMBER_ROW_H + Math.max(unassigned.length, 1) * ROW_H,
       });
     }
     return result;
@@ -396,7 +434,7 @@ const GanttChart = forwardRef<GanttChartHandle, Props>(function GanttChart(
           style={{ width: leftW }}
           onScroll={e => syncVertical('left', (e.target as HTMLDivElement).scrollTop)}>
 
-          {sections.map(({ member, memberItems, height }) => {
+          {sections.map(({ member, memberItems, flatRows, height }) => {
             const isCollapsed = collapsed.has(member.id);
             return (
             <div key={member.id} className="border-b border-gray-200" style={{ height: effHeight(member.id, height) }}>
@@ -425,8 +463,20 @@ const GanttChart = forwardRef<GanttChartHandle, Props>(function GanttChart(
                 )}
               </div>
 
-              {/* 아이템 행 */}
-              {!isCollapsed && memberItems.map(item => {
+              {/* 에픽 그루핑 행 */}
+              {!isCollapsed && flatRows.map((row, idx) => {
+                if (row.kind === 'epic-header') {
+                  return (
+                    <div key={`epic-${idx}`}
+                      className="flex items-center gap-1.5 border-b border-gray-100 bg-orange-50/40"
+                      style={{ height: EPIC_HEADER_H, paddingLeft: 8, paddingRight: 8 }}>
+                      <TypeChip type="Epic" />
+                      <span className="text-[11px] font-semibold text-gray-600 truncate flex-1">{row.epicName}</span>
+                      <span className="text-[10px] text-gray-400 flex-shrink-0">{row.itemCount}건</span>
+                    </div>
+                  );
+                }
+                const { item } = row;
                 const typeKey = item.type === 'planned' ? 'planned' : (item.issueType ?? 'Task');
                 return (
                   <div key={item.id}
@@ -434,8 +484,7 @@ const GanttChart = forwardRef<GanttChartHandle, Props>(function GanttChart(
                       ${item.noDates ? 'bg-amber-50/30 hover:bg-amber-50/60' : 'hover:bg-indigo-50/20'}`}
                     style={{ height: ROW_H }}
                     onClick={() => onClickItem(item)}>
-                    {/* KEY */}
-                    <div style={{ width: COL_KEY_W }} className="px-2 flex-shrink-0 overflow-hidden">
+                    <div style={{ width: COL_KEY_W, paddingLeft: 20, paddingRight: 4 }} className="flex-shrink-0 overflow-hidden">
                       {item.jiraKey
                         ? <a href={item.jiraUrl} target="_blank" rel="noreferrer"
                             className="text-[10px] font-mono text-indigo-500 hover:text-indigo-700 hover:underline truncate block"
@@ -445,11 +494,9 @@ const GanttChart = forwardRef<GanttChartHandle, Props>(function GanttChart(
                         : <span className="text-[10px] text-cyan-500 font-semibold">✦ 예정</span>
                       }
                     </div>
-                    {/* TYPE */}
                     <div style={{ width: COL_TYPE_W }} className="px-1 flex-shrink-0">
                       <TypeChip type={typeKey} />
                     </div>
-                    {/* SUMMARY */}
                     <div className="flex-1 px-1.5 min-w-0">
                       <div className="flex items-center gap-1">
                         {item.noDates && <span className="text-amber-500 text-[10px] flex-shrink-0">⚠</span>}
@@ -457,11 +504,7 @@ const GanttChart = forwardRef<GanttChartHandle, Props>(function GanttChart(
                           {item.title}
                         </p>
                       </div>
-                      {item.epicName && (
-                        <p className="text-[10px] text-gray-400 truncate leading-none mt-0.5">{item.epicName}</p>
-                      )}
                     </div>
-                    {/* STATUS */}
                     <div style={{ width: COL_STATUS_W }} className="px-1 flex-shrink-0 flex justify-end pr-2">
                       {item.noDates
                         ? <span className="text-[10px] text-gray-400">일정 미기입</span>
@@ -501,11 +544,17 @@ const GanttChart = forwardRef<GanttChartHandle, Props>(function GanttChart(
             {/* 섹션 배경 */}
             {(() => {
               let top = 0;
-              return sections.map(({ member, memberItems, height }) => {
+              return sections.map(({ member, flatRows, height }) => {
                 const isCol = collapsed.has(member.id);
                 const eh = effHeight(member.id, height);
                 const sTop = top; top += eh;
-                const rowCnt = Math.max(memberItems.length, 1);
+                const linePositions: number[] = [];
+                let acc = MEMBER_ROW_H;
+                for (const row of flatRows) {
+                  acc += row.kind === 'epic-header' ? EPIC_HEADER_H : ROW_H;
+                  linePositions.push(acc - 1);
+                }
+                if (flatRows.length === 0) linePositions.push(MEMBER_ROW_H + ROW_H - 1);
                 return (
                   <div key={member.id} className="absolute border-b border-gray-200"
                     style={{ top: sTop, left: 0, right: 0, height: eh }}>
@@ -517,9 +566,9 @@ const GanttChart = forwardRef<GanttChartHandle, Props>(function GanttChart(
                             style={{ left: i * colW, width: colW }} />
                         : null
                     )}
-                    {!isCol && Array.from({ length: rowCnt }).map((_, i) => (
+                    {!isCol && linePositions.map((pos, i) => (
                       <div key={i} className="absolute inset-x-0"
-                        style={{ top: MEMBER_ROW_H + (i + 1) * ROW_H - 1, height: 1, background: '#e5e7eb', zIndex: 2 }} />
+                        style={{ top: pos, height: 1, background: '#e5e7eb', zIndex: 2 }} />
                     ))}
                   </div>
                 );
@@ -535,7 +584,7 @@ const GanttChart = forwardRef<GanttChartHandle, Props>(function GanttChart(
             {/* 간트 바 */}
             {(() => {
               let mTop = 0;
-              return sections.flatMap(({ member, memberItems, height }) => {
+              return sections.flatMap(({ member, memberItems, flatRows, height }) => {
                 const isCol = collapsed.has(member.id);
                 const eh = effHeight(member.id, height);
                 const baseTop = mTop; mTop += eh;
@@ -586,8 +635,9 @@ const GanttChart = forwardRef<GanttChartHandle, Props>(function GanttChart(
                   return bars;
                 }
 
-                return memberItems.map((item, idx) => {
-                  const rowTop = baseTop + MEMBER_ROW_H + idx * ROW_H;
+                const itemRows = flatRows.filter((r): r is Extract<EpicFlatRow, { kind: 'item' }> => r.kind === 'item');
+                return itemRows.map(({ item, topOffset }) => {
+                  const rowTop = baseTop + topOffset;
 
                   // ── 날짜 미기입 아이템: ⚠ 배지만 표시 ──
                   if (item.noDates) {
