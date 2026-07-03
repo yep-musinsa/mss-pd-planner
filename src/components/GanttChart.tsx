@@ -266,6 +266,7 @@ const GanttChart = forwardRef<GanttChartHandle, Props>(function GanttChart(
 
   // 멤버별 섹션 구성 (에픽 그루핑)
   const sections = useMemo(() => {
+    const initiativeTitles = new Set(items.filter(i => i.issueType === 'Initiative').map(i => i.title));
     function buildFlatRows(memberItems: GanttItem[]): { flatRows: EpicFlatRow[]; contentH: number } {
       const grouped = new Map<string, GanttItem[]>();
       const noEpic: GanttItem[] = [];
@@ -280,7 +281,7 @@ const GanttChart = forwardRef<GanttChartHandle, Props>(function GanttChart(
       const flatRows: EpicFlatRow[] = [];
       let contentH = 0;
       const addGroup = (epicName: string, epicItems: GanttItem[]) => {
-        const skipHeader = epicItems.length === 1 && epicItems[0].issueType === 'Epic';
+        const skipHeader = (epicItems.length === 1 && epicItems[0].issueType === 'Epic') || initiativeTitles.has(epicName);
         if (!skipHeader) {
           flatRows.push({ kind: 'epic-header', epicName, itemCount: epicItems.length });
           contentH += EPIC_HEADER_H;
