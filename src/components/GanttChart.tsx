@@ -280,8 +280,11 @@ const GanttChart = forwardRef<GanttChartHandle, Props>(function GanttChart(
       const flatRows: EpicFlatRow[] = [];
       let contentH = 0;
       const addGroup = (epicName: string, epicItems: GanttItem[]) => {
-        flatRows.push({ kind: 'epic-header', epicName, itemCount: epicItems.length });
-        contentH += EPIC_HEADER_H;
+        const skipHeader = epicItems.length === 1 && epicItems[0].issueType === 'Epic';
+        if (!skipHeader) {
+          flatRows.push({ kind: 'epic-header', epicName, itemCount: epicItems.length });
+          contentH += EPIC_HEADER_H;
+        }
         for (const item of epicItems) {
           flatRows.push({ kind: 'item', item, topOffset: MEMBER_ROW_H + contentH });
           contentH += ROW_H;
