@@ -13,7 +13,7 @@ const EPIC_HEADER_H = 28;
 const BAR_H = 22;
 
 type EpicFlatRow =
-  | { kind: 'epic-header'; epicName: string; itemCount: number }
+  | { kind: 'epic-header'; epicName: string; itemCount: number; startDate?: string; endDate?: string; topOffset: number }
   | { kind: 'item'; item: GanttItem; topOffset: number };
 const RESIZE_HANDLE_W = 8;
 
@@ -283,7 +283,10 @@ const GanttChart = forwardRef<GanttChartHandle, Props>(function GanttChart(
       const addGroup = (epicName: string, epicItems: GanttItem[]) => {
         const skipHeader = (epicItems.length === 1 && epicItems[0].issueType === 'Epic') || initiativeTitles.has(epicName);
         if (!skipHeader) {
-          flatRows.push({ kind: 'epic-header', epicName, itemCount: epicItems.length });
+          const dates = epicItems.filter(i => i.startDate && i.endDate);
+          const startDate = dates.length ? dates.map(i => i.startDate!).sort()[0] : undefined;
+          const endDate = dates.length ? dates.map(i => i.endDate!).sort().at(-1) : undefined;
+          flatRows.push({ kind: 'epic-header', epicName, itemCount: epicItems.length, startDate, endDate, topOffset: MEMBER_ROW_H + contentH });
           contentH += EPIC_HEADER_H;
         }
         for (const item of epicItems) {
@@ -639,8 +642,28 @@ const GanttChart = forwardRef<GanttChartHandle, Props>(function GanttChart(
                   return bars;
                 }
 
+                const epicHeaderBars = flatRows
+                  .filter((r): r is Extract<EpicFlatRow, { kind: 'epic-header' }> => r.kind === 'epic-header')
+                  .filter(r => r.startDate && r.endDate)
+                  .map(r => {
+                    const vsStr = fmtDate(viewStart);
+                    const veStr = fmtDate(viewEnd);
+                    if (!r.startDate || !r.endDate || r.endDate < vsStr || r.startDate > veStr) return null;
+                    const cs = r.startDate < vsStr ? vsStr : r.startDate;
+                    const ce = r.endDate > veStr ? veStr : r.endDate;
+                    const left = barLeft(cs);
+                    const width = Math.max(barWidth(cs, ce), colW);
+                    const EPIC_BAR_H = 5;
+                    const top = baseTop + r.topOffset + (EPIC_HEADER_H - EPIC_BAR_H) / 2;
+                    return (
+                      <div key={`epic-bar-${r.epicName}`}
+                        className="absolute rounded-full pointer-events-none"
+                        style={{ left, top, width, height: EPIC_BAR_H, background: '#fb923c', opacity: 0.7 }} />
+                    );
+                  });
+
                 const itemRows = flatRows.filter((r): r is Extract<EpicFlatRow, { kind: 'item' }> => r.kind === 'item');
-                return itemRows.map(({ item, topOffset }) => {
+                return [...epicHeaderBars, ...itemRows.map(({ item, topOffset }) => {
                   const rowTop = baseTop + topOffset;
 
                   // ── 날짜 미기입 아이템: ⚠ 배지만 표시 ──
@@ -747,7 +770,7 @@ const GanttChart = forwardRef<GanttChartHandle, Props>(function GanttChart(
                       )}
                     </div>
                   );
-                });
+                })];
               });
             })()}
           </div>
