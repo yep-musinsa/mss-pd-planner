@@ -653,7 +653,7 @@ const GanttChart = forwardRef<GanttChartHandle, Props>(function GanttChart(
                     const ce = r.endDate > veStr ? veStr : r.endDate;
                     const left = barLeft(cs);
                     const width = Math.max(barWidth(cs, ce), colW);
-                    const EPIC_BAR_H = 5;
+                    const EPIC_BAR_H = 7;
                     const top = baseTop + r.topOffset + (EPIC_HEADER_H - EPIC_BAR_H) / 2;
                     return (
                       <div key={`epic-bar-${r.epicName}`}
