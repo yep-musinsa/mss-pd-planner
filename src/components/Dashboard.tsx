@@ -24,9 +24,9 @@ function formatDueTag(daysLeft: number): string {
 }
 
 // 오늘의 요약 — 매번 최신 데이터에서 직접 계산 (외부 저장소 의존 없음)
-function buildBriefingSummary(rows: BriefingRow[], members: Member[]): string[] {
+function buildBriefingSummary(rows: BriefingRow[], members: Member[]): { emoji: string; text: string }[] {
   if (rows.length === 0) return [];
-  const notes: string[] = [];
+  const notes: { emoji: string; text: string }[] = [];
   const memberName = (id: string) => members.find(m => m.id === id)?.name ?? '';
 
   // 1) 특정 담당자에게 몰려 있는지
@@ -34,7 +34,7 @@ function buildBriefingSummary(rows: BriefingRow[], members: Member[]): string[] 
   rows.forEach(({ item }) => countByMember.set(item.memberId, (countByMember.get(item.memberId) ?? 0) + 1));
   const [topMemberId, topCount] = [...countByMember.entries()].sort((a, b) => b[1] - a[1])[0];
   if (topCount >= 2 && topCount >= Math.ceil(rows.length / 2)) {
-    notes.push(`${memberName(topMemberId)}님 쪽에 브리핑 대상 티켓이 좀 쌓였어요 (${topCount}건). 캐파를 넘어선 건지 한번 봐주시면 좋을 것 같아요.`);
+    notes.push({ emoji: '📌', text: `${memberName(topMemberId)}님 쪽에 브리핑 대상 티켓이 좀 쌓였어요 (${topCount}건). 캐파를 넘어선 건지 한번 봐주시면 좋을 것 같아요.` });
   }
 
   // 2) 라벨 없이 가장 오래 초과된 건 — 봇이 놓쳤을 가능성
@@ -42,13 +42,13 @@ function buildBriefingSummary(rows: BriefingRow[], members: Member[]): string[] 
     .filter(r => !r.hasBotLabel && r.daysLeft < 0)
     .sort((a, b) => a.daysLeft - b.daysLeft)[0];
   if (noLabelOverdue) {
-    notes.push(`${memberName(noLabelOverdue.item.memberId)}님의 ${noLabelOverdue.item.jiraKey}는 벌써 ${-noLabelOverdue.daysLeft}일째 마감이 지났는데 마감 초과 라벨은 안 붙어 있어요. 지금도 진행 중인 게 맞는지 확인이 필요해 보여요.`);
+    notes.push({ emoji: '🔍', text: `${memberName(noLabelOverdue.item.memberId)}님의 ${noLabelOverdue.item.jiraKey}는 벌써 ${-noLabelOverdue.daysLeft}일째 마감이 지났는데 마감 초과 라벨은 안 붙어 있어요. 지금도 진행 중인 게 맞는지 확인이 필요해 보여요.` });
   }
 
   // 3) 봇 라벨 비율
   const botCount = rows.filter(r => r.hasBotLabel).length;
   if (botCount > 0 && botCount < rows.length) {
-    notes.push(`오늘 올라온 ${rows.length}건 중 봇이 실제로 마감 초과 라벨을 붙인 건 ${botCount}건뿐이에요. 라벨만 보면 이 ${botCount}건이 제일 급합니다.`);
+    notes.push({ emoji: '🤖', text: `오늘 올라온 ${rows.length}건 중 봇이 실제로 마감 초과 라벨을 붙인 건 ${botCount}건뿐이에요. 라벨만 보면 이 ${botCount}건이 제일 급합니다.` });
   }
 
   return notes;
@@ -352,10 +352,11 @@ export default function Dashboard({ items, members, jiraSettings, onSync, syncLo
         </div>
 
         {briefingNotes.length > 0 && (
-          <div className="flex flex-col gap-2 mb-5">
+          <div className="flex flex-col gap-2.5 mb-5">
             {briefingNotes.map((note, idx) => (
-              <p key={idx} className="text-[13px] text-gray-700 leading-relaxed" style={{ maxWidth: '62ch' }}>
-                {note}
+              <p key={idx} className="text-[14px] text-gray-700 leading-relaxed flex items-start gap-2">
+                <span className="flex-shrink-0">{note.emoji}</span>
+                <span>{note.text}</span>
               </p>
             ))}
           </div>
