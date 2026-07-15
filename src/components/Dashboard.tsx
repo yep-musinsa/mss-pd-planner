@@ -219,6 +219,7 @@ export default function Dashboard({ items, members, jiraSettings, onSync, syncLo
         i.type === 'jira' &&
         !i.noDates &&
         i.status !== 'done' &&
+        i.status !== 'hold' &&
         !BRIEFING_EXCLUDED_TYPES.has(i.issueType ?? ''))
       .map(i => ({
         item: i,
@@ -368,15 +369,21 @@ export default function Dashboard({ items, members, jiraSettings, onSync, syncLo
             <div className="grid grid-cols-1 md:grid-cols-3 gap-2.5 mb-5">
               {briefingTop3.map(({ item, daysLeft, hasBotLabel }) => (
                 <a key={item.id} href={item.jiraUrl} target="_blank" rel="noreferrer"
-                  className="block border border-gray-200 hover:bg-gray-50 transition-colors"
-                  style={{ borderRadius: '0 6px 6px 0', borderLeft: '3px solid #f87171', padding: '10px 12px' }}>
-                  <p className="text-[11px] font-mono font-semibold text-red-500 flex items-center gap-1">
-                    {item.jiraKey} · {members.find(m => m.id === item.memberId)?.name ?? ''}
-                    <ExternalLink size={9} />
-                  </p>
-                  <p className="text-[12.5px] font-semibold text-gray-800 mt-0.5 truncate">{item.title}</p>
+                  className="block bg-white border border-gray-200 hover:border-gray-300 hover:shadow-sm transition-all"
+                  style={{ borderRadius: 8, padding: 12 }}>
+                  <div className="flex items-center justify-between gap-1 mb-1">
+                    <span className="flex items-center gap-1 text-[11px] font-mono text-blue-500">
+                      {item.jiraKey}<ExternalLink size={9} />
+                    </span>
+                    <span className="flex items-center gap-1 text-[10px] font-semibold text-white bg-red-500 px-1.5 py-0.5 flex-shrink-0"
+                      style={{ borderRadius: 4 }}>
+                      <AlertTriangle size={9} />{formatDueTag(daysLeft)}
+                    </span>
+                  </div>
+                  <p className="text-[12.5px] font-semibold text-gray-800 truncate">{item.title}</p>
                   <p className="text-[11px] text-gray-400 mt-0.5">
-                    {hasBotLabel ? 'DUE_OVERDUE_BOT · ' : ''}{formatDueTag(daysLeft)}
+                    {members.find(m => m.id === item.memberId)?.name ?? ''}
+                    {hasBotLabel ? ' · DUE_OVERDUE_BOT' : ''}
                   </p>
                 </a>
               ))}
