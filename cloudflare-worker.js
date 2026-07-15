@@ -88,30 +88,6 @@ export default {
       }
     }
 
-    // ── 일일 브리핑 요약 노트 조회 ──
-    if (url.pathname === '/jira-proxy/briefing-notes' && request.method === 'GET') {
-      const data = await env.PD_KV.get('briefing_notes');
-      return new Response(data ?? '{}', {
-        headers: { ...CORS_HEADERS, 'Content-Type': 'application/json' },
-      });
-    }
-
-    // ── 일일 브리핑 요약 노트 저장 (매일 아침 브리핑 자동화가 호출) ──
-    if (url.pathname === '/jira-proxy/briefing-notes' && request.method === 'POST') {
-      try {
-        const body = await request.json();
-        // body: { date: 'YYYY-MM-DD', notes: string[] }
-        await env.PD_KV.put('briefing_notes', JSON.stringify(body));
-        return new Response(JSON.stringify({ ok: true }), {
-          headers: { ...CORS_HEADERS, 'Content-Type': 'application/json' },
-        });
-      } catch (e) {
-        return new Response(JSON.stringify({ ok: false, error: String(e) }), {
-          status: 500, headers: { ...CORS_HEADERS, 'Content-Type': 'application/json' },
-        });
-      }
-    }
-
     // ── 예정 업무 조회 ──
     if (url.pathname === '/jira-proxy/planned' && request.method === 'GET') {
       const data = await env.PD_KV.get('planned_items');

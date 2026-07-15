@@ -2,11 +2,16 @@ import { useMemo, useState, useRef, useEffect } from 'react';
 import { parseISO, addDays, getMonth, getYear, differenceInDays, format, isAfter, isBefore } from 'date-fns';
 import { ExternalLink, AlertTriangle, RefreshCw, ChevronDown, Check } from 'lucide-react';
 import type { GanttItem, Member, JiraSettings } from '../types';
-import { useBriefingNotes } from '../hooks/useBriefingNotes';
 
 // 브리핑에서 항상 제외 — 이니셔티브/에픽 단위 진행률은 MD 그래프가 이미 다룬다
 const BRIEFING_EXCLUDED_TYPES = new Set(['Epic', 'Initiative']);
 const BRIEFING_DUE_HORIZON_DAYS = 2;
+
+interface BriefingRow {
+  item: GanttItem;
+  daysLeft: number;
+  hasBotLabel: boolean;
+}
 
 function daysUntil(dateStr: string, todayStr: string): number {
   return differenceInDays(parseISO(dateStr), parseISO(todayStr));
@@ -16,6 +21,37 @@ function formatDueTag(daysLeft: number): string {
   if (daysLeft < 0) return `${-daysLeft}일 초과`;
   if (daysLeft === 0) return '오늘 마감';
   return `D-${daysLeft}`;
+}
+
+// 오늘의 요약 — 매번 최신 데이터에서 직접 계산 (외부 저장소 의존 없음)
+function buildBriefingSummary(rows: BriefingRow[], members: Member[]): string[] {
+  if (rows.length === 0) return [];
+  const notes: string[] = [];
+  const memberName = (id: string) => members.find(m => m.id === id)?.name ?? '';
+
+  // 1) 특정 담당자에게 몰려 있는지
+  const countByMember = new Map<string, number>();
+  rows.forEach(({ item }) => countByMember.set(item.memberId, (countByMember.get(item.memberId) ?? 0) + 1));
+  const [topMemberId, topCount] = [...countByMember.entries()].sort((a, b) => b[1] - a[1])[0];
+  if (topCount >= 2 && topCount >= Math.ceil(rows.length / 2)) {
+    notes.push(`${memberName(topMemberId)}님 쪽에 브리핑 대상 티켓이 좀 쌓였어요 (${topCount}건). 캐파를 넘어선 건지 한번 봐주시면 좋을 것 같아요.`);
+  }
+
+  // 2) 라벨 없이 가장 오래 초과된 건 — 봇이 놓쳤을 가능성
+  const noLabelOverdue = rows
+    .filter(r => !r.hasBotLabel && r.daysLeft < 0)
+    .sort((a, b) => a.daysLeft - b.daysLeft)[0];
+  if (noLabelOverdue) {
+    notes.push(`${memberName(noLabelOverdue.item.memberId)}님의 ${noLabelOverdue.item.jiraKey}는 벌써 ${-noLabelOverdue.daysLeft}일째 마감이 지났는데 마감 초과 라벨은 안 붙어 있어요. 지금도 진행 중인 게 맞는지 확인이 필요해 보여요.`);
+  }
+
+  // 3) 봇 라벨 비율
+  const botCount = rows.filter(r => r.hasBotLabel).length;
+  if (botCount > 0 && botCount < rows.length) {
+    notes.push(`오늘 올라온 ${rows.length}건 중 봇이 실제로 마감 초과 라벨을 붙인 건 ${botCount}건뿐이에요. 라벨만 보면 이 ${botCount}건이 제일 급합니다.`);
+  }
+
+  return notes;
 }
 
 const STATUS_OPTIONS: { value: GanttItem['status']; label: string }[] = [
@@ -176,8 +212,6 @@ export default function Dashboard({ items, members, jiraSettings, onSync, syncLo
   const quarters = getCurrentYearQuarters();
   const today = format(new Date(), 'yyyy-MM-dd');
 
-  const briefingNotes = useBriefingNotes();
-
   // 일일 브리핑 — 최우선(마감 임박·초과 / DUE_OVERDUE_BOT) 목록, 디자인·작업 티켓만
   const briefingItems = useMemo(() => {
     return items
@@ -202,6 +236,8 @@ export default function Dashboard({ items, members, jiraSettings, onSync, syncLo
     });
     return sorted.slice(0, 3);
   }, [briefingItems]);
+
+  const briefingNotes = useMemo(() => buildBriefingSummary(briefingItems, members), [briefingItems, members]);
 
   const currentQuarter = getQuarterLabel(today);
   const defaultQ = quarters.includes(currentQuarter) ? currentQuarter : quarters[0];
