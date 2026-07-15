@@ -407,7 +407,7 @@ function AppInner({ isAdmin, logout }: { isAdmin: boolean; logout: () => void })
   }
 
   const NAV_ITEMS = [
-    { v: 'dashboard' as ViewMode, label: '리소스 요약', Icon: LayoutDashboard },
+    { v: 'dashboard' as ViewMode, label: '대시보드', Icon: LayoutDashboard },
     { v: 'gantt'     as ViewMode, label: '타임라인',  Icon: Calendar },
     ...(isAdmin ? [{ v: 'members' as ViewMode, label: '팀원', Icon: Users }] : []),
     ...(isAdmin ? [{ v: 'settings' as ViewMode, label: 'Jira 설정', Icon: Settings }] : []),

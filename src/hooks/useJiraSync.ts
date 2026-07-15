@@ -57,6 +57,8 @@ function issueToItem(
   const startDate = extractDate(issue.fields, START_FIELDS);
   const endDate   = extractDate(issue.fields, END_FIELDS);
 
+  const labels = (issue.fields.labels as string[] | undefined) ?? [];
+
   if (!startDate || !endDate) {
     if (!allowNoDates) return null;
     const today = new Date().toISOString().slice(0, 10);
@@ -72,6 +74,7 @@ function issueToItem(
       jiraUrl: `https://${baseUrl}/browse/${issue.key}`,
       issueType: issue.fields.issuetype.name,
       epicName: epicName ?? (issue.fields.parent?.fields?.summary),
+      labels,
       noDates: true,
     };
   }
@@ -88,6 +91,7 @@ function issueToItem(
     jiraUrl: `https://${baseUrl}/browse/${issue.key}`,
     issueType: issue.fields.issuetype.name,
     epicName: epicName ?? (issue.fields.parent?.fields?.summary),
+    labels,
   };
 }
 
