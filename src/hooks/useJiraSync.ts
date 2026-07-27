@@ -7,6 +7,7 @@ const STATUS_MAP: Record<string, GanttItem['status']> = {
   'SUGGESTED': 'todo', 'Suggested': 'todo',
   'In Design': 'in_progress', 'In Development': 'in_progress', 'In Review/QA': 'in_progress',
   'Done': 'done', '완료': 'done', 'Closed': 'done', 'Resolved': 'done',
+  'Hand-off': 'done', 'Hand off': 'done', 'Handoff': 'done', '핸드오프': 'done',
   'HOLD': 'hold', 'Hold': 'hold', 'On Hold': 'hold', '보류': 'hold',
 };
 
