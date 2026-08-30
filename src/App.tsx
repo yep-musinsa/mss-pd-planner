@@ -221,7 +221,14 @@ function AppInner({ isAdmin, logout }: { isAdmin: boolean; logout: () => void })
   const { plannedItems, updatePlanned } = usePlannedItems();
   const items = useMemo(() => [...plannedItems, ...jiraItems], [plannedItems, jiraItems]);
   const [members, setMembers] = useState<Member[]>(loadMembers);
-  const [view, setView]       = useState<ViewMode>('gantt');
+  const [view, setViewState]  = useState<ViewMode>(() => {
+    try { return (localStorage.getItem('pd-planner-view') as ViewMode) || 'gantt'; }
+    catch { return 'gantt'; }
+  });
+  const setView = (v: ViewMode) => {
+    setViewState(v);
+    try { localStorage.setItem('pd-planner-view', v); } catch { /* ignore */ }
+  };
   const [ganttZoom, setGanttZoom] = useState<GanttZoom>('month');
   const [viewCenter, setViewCenter] = useState(new Date());
   const [showAddModal, setShowAddModal] = useState(false);
