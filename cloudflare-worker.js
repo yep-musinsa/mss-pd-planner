@@ -66,14 +66,11 @@ function buildDailyMessage(attendance, todayKst) {
     else if (st === 'off') off.push(m.name);
   }
   const pct = dayRate(attendance, dateStr);
-  const flag = pct !== null && pct < 50 ? ` ⚠️ 50% 미만` : ' ✅';
-  const lines = [
-    `📍 *오늘 (${md(todayKst)} ${DOW_KR[todayKst.getUTCDay()]}) 근무 현황*`,
-    `🏢 오피스 ${office.length}명${office.length ? ' · ' + office.join(', ') : ''}`,
-    `🏠 재택 ${wfh.length}명${wfh.length ? ' · ' + wfh.join(', ') : ''}`,
-  ];
-  if (off.length) lines.push(`🌴 휴가 ${off.length}명 · ${off.join(', ')}`);
-  lines.push(`\n오피스 출근율 *${pct === null ? '-' : pct + '%'}*${pct === null ? '' : flag}`);
+  const warn = pct !== null && pct < 50;
+  const lines = [`*오늘 근무 현황* - 오피스 출근율 *${pct === null ? '-' : pct + '%'}*${warn ? ' ⚠️ 50% 미만' : ''}`];
+  if (office.length) lines.push(`🏢 오피스 - ${office.join(', ')}`);
+  if (wfh.length) lines.push(`🏠 재택 - ${wfh.join(', ')}`);
+  if (off.length) lines.push(`🌴 휴가 - ${off.join(', ')}`);
   return lines.join('\n');
 }
 
@@ -84,10 +81,10 @@ function buildWeeklyMessage(attendance, todayKst) {
   const nextMon = addDaysUTC(todayKst, toMon);
   const days = Array.from({ length: 5 }, (_, i) => addDaysUTC(nextMon, i));
   const lowDays = [];
-  const lines = [`🗓️ *다음 주 출근 현황 (${md(days[0])}~${md(days[4])})*`];
+  const lines = [`*다음 주 출근 현황 (${md(days[0])}~${md(days[4])})*`];
   for (const d of days) {
     const ds = ymd(d);
-    const label = `${DOW_KR[d.getUTCDay()]} ${md(d)}`;
+    const label = `${md(d)}(${DOW_KR[d.getUTCDay()]})`;
     if (ATT_HOLIDAYS[ds]) { lines.push(`${label} · 🎌 ${ATT_HOLIDAYS[ds]}`); continue; }
     const wfh = [], off = [];
     for (const m of ATT_MEMBERS) {
@@ -96,8 +93,8 @@ function buildWeeklyMessage(attendance, todayKst) {
       else if (st === 'off') off.push(m.name);
     }
     const parts = [label];
-    if (wfh.length) parts.push(`🏠 재택 - ${wfh.join(', ')}`);
-    if (off.length) parts.push(`🌴 휴가 - ${off.join(', ')}`);
+    if (wfh.length) parts.push(`재택 - ${wfh.join(', ')}`);
+    if (off.length) parts.push(`휴가 - ${off.join(', ')}`);
     const pct = dayRate(attendance, ds);
     const warn = pct !== null && pct < 50;
     if (warn) lowDays.push(`${DOW_KR[d.getUTCDay()]}요일`);
