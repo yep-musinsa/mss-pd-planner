@@ -11,7 +11,7 @@ const MODE_META: Record<WorkMode, { label: string; bg: string; color: string }> 
   wfh:    { label: '재택',   bg: '#dcfce7', color: '#15803d' },
   off:    { label: '휴가',   bg: '#ffedd5', color: '#c2410c' },
 };
-const MODE_ORDER: (WorkMode | '')[] = ['office', 'wfh', 'off', ''];
+const MODE_ORDER: WorkMode[] = ['office', 'wfh', 'off'];
 
 interface Props {
   members: Member[];
@@ -43,7 +43,7 @@ export default function AttendanceView({ members, currentEmail }: Props) {
   const dayRates = useMemo(() => dayKeys.map(dk => {
     let office = 0, present = 0;
     for (const m of activeMembers) {
-      const st = attendance[m.id]?.[dk];
+      const st = attendance[m.id]?.[dk] ?? 'office'; // 미입력은 오피스로 간주
       if (st === 'office') { office++; present++; }
       else if (st === 'wfh') { present++; }
     }
@@ -105,8 +105,9 @@ export default function AttendanceView({ members, currentEmail }: Props) {
           </thead>
 
           <tbody>
-            {activeMembers.map(member => {
+            {activeMembers.map((member, mIdx) => {
               const isMe = member.email.toLowerCase() === currentEmail.toLowerCase();
+              const openUp = mIdx >= activeMembers.length - 2; // 마지막 2행은 위로 열기
               return (
                 <tr key={member.id} className="border-b border-gray-100 hover:bg-gray-50/60">
                   <td className="pl-4 py-2">
@@ -120,8 +121,8 @@ export default function AttendanceView({ members, currentEmail }: Props) {
                     </div>
                   </td>
                   {dayKeys.map(dk => {
-                    const st = attendance[member.id]?.[dk] as WorkMode | undefined;
-                    const meta = st ? MODE_META[st] : null;
+                    const st = (attendance[member.id]?.[dk] as WorkMode | undefined) ?? 'office';
+                    const meta = MODE_META[st];
                     const cellId = `${member.id}::${dk}`;
                     const isOpen = openCell === cellId;
                     return (
@@ -133,26 +134,27 @@ export default function AttendanceView({ members, currentEmail }: Props) {
                             ${isMe ? 'cursor-pointer' : 'cursor-default'}`}
                           style={{
                             minWidth: 88, padding: '6px 10px',
-                            background: meta ? meta.bg : '#f9fafb',
-                            color: meta ? meta.color : '#9ca3af',
-                            border: meta ? '1px solid transparent' : '1px dashed #d1d5db',
+                            background: meta.bg,
+                            color: meta.color,
+                            border: '1px solid transparent',
                           }}>
-                          {meta ? meta.label : '미입력'}
+                          {meta.label}
                           {isMe && <span className="text-[9px] opacity-50">▼</span>}
                         </button>
 
                         {isOpen && (
-                          <div className="absolute z-30 top-full left-1/2 -translate-x-1/2 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg overflow-hidden"
+                          <div className={`absolute z-30 left-1/2 -translate-x-1/2 bg-white border border-gray-200 rounded-lg shadow-lg overflow-hidden
+                            ${openUp ? 'bottom-full mb-1' : 'top-full mt-1'}`}
                             style={{ minWidth: 100 }}>
                             {MODE_ORDER.map(opt => {
-                              const om = opt ? MODE_META[opt] : null;
+                              const om = MODE_META[opt];
                               return (
-                                <button key={opt || 'none'}
+                                <button key={opt}
                                   onClick={() => { setCell(member.id, dk, opt); setOpenCell(null); }}
                                   className="w-full flex items-center gap-2 px-3 py-2 hover:bg-gray-50 text-left">
                                   <span className="w-2.5 h-2.5 rounded-sm flex-shrink-0"
-                                    style={{ background: om ? om.color : '#d1d5db' }} />
-                                  <span className="text-[12.5px] text-gray-700">{om ? om.label : '미입력'}</span>
+                                    style={{ background: om.color }} />
+                                  <span className="text-[12.5px] text-gray-700">{om.label}</span>
                                 </button>
                               );
                             })}
