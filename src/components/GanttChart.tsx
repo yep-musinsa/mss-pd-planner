@@ -13,7 +13,7 @@ const EPIC_HEADER_H = 28;
 const BAR_H = 22;
 
 type EpicFlatRow =
-  | { kind: 'epic-header'; epicName: string; itemCount: number; startDate?: string; endDate?: string; topOffset: number }
+  | { kind: 'epic-header'; epicName: string; epicKey: string; collapsed: boolean; itemCount: number; startDate?: string; endDate?: string; topOffset: number }
   | { kind: 'item'; item: GanttItem; topOffset: number };
 const RESIZE_HANDLE_W = 8;
 
@@ -145,6 +145,7 @@ const GanttChart = forwardRef<GanttChartHandle, Props>(function GanttChart(
   const [dragState, setDragState] = useState<DragState | null>(null);
   const [dragDelta, setDragDelta] = useState(0);
   const [collapsed, setCollapsed] = useState<Set<string>>(new Set());
+  const [collapsedEpics, setCollapsedEpics] = useState<Set<string>>(new Set());
   const [leftW, setLeftW] = useState(LEFT_W_DEFAULT);
   const resizingRef = useRef(false);
   const resizeStartX = useRef(0);
@@ -180,6 +181,15 @@ const GanttChart = forwardRef<GanttChartHandle, Props>(function GanttChart(
 
   function effHeight(memberId: string, h: number) {
     return collapsed.has(memberId) ? MEMBER_ROW_H : h;
+  }
+
+  const epicKey = (memberId: string, epicName: string) => `${memberId}::${epicName}`;
+  function toggleEpic(key: string) {
+    setCollapsedEpics(prev => {
+      const next = new Set(prev);
+      next.has(key) ? next.delete(key) : next.add(key);
+      return next;
+    });
   }
 
   const totalDays = differenceInDays(viewEnd, viewStart) + 1;
@@ -267,7 +277,7 @@ const GanttChart = forwardRef<GanttChartHandle, Props>(function GanttChart(
   // 멤버별 섹션 구성 (에픽 그루핑)
   const sections = useMemo(() => {
     const initiativeTitles = new Set(items.filter(i => i.issueType === 'Initiative').map(i => i.title));
-    function buildFlatRows(memberItems: GanttItem[]): { flatRows: EpicFlatRow[]; contentH: number } {
+    function buildFlatRows(memberId: string, memberItems: GanttItem[]): { flatRows: EpicFlatRow[]; contentH: number } {
       const grouped = new Map<string, GanttItem[]>();
       const noEpic: GanttItem[] = [];
       for (const item of memberItems) {
@@ -286,8 +296,11 @@ const GanttChart = forwardRef<GanttChartHandle, Props>(function GanttChart(
           const dates = epicItems.filter(i => i.startDate && i.endDate);
           const startDate = dates.length ? dates.map(i => i.startDate!).sort()[0] : undefined;
           const endDate = dates.length ? dates.map(i => i.endDate!).sort().at(-1) : undefined;
-          flatRows.push({ kind: 'epic-header', epicName, itemCount: epicItems.length, startDate, endDate, topOffset: MEMBER_ROW_H + contentH });
+          const key = epicKey(memberId, epicName);
+          const isEpicCollapsed = collapsedEpics.has(key);
+          flatRows.push({ kind: 'epic-header', epicName, epicKey: key, collapsed: isEpicCollapsed, itemCount: epicItems.length, startDate, endDate, topOffset: MEMBER_ROW_H + contentH });
           contentH += EPIC_HEADER_H;
+          if (isEpicCollapsed) return;
         }
         for (const item of epicItems) {
           flatRows.push({ kind: 'item', item, topOffset: MEMBER_ROW_H + contentH });
@@ -302,7 +315,7 @@ const GanttChart = forwardRef<GanttChartHandle, Props>(function GanttChart(
 
     const result = activeMembers.map(member => {
       const memberItems = items.filter(i => i.memberId === member.id && i.issueType !== 'Initiative');
-      const { flatRows, contentH } = buildFlatRows(memberItems);
+      const { flatRows, contentH } = buildFlatRows(member.id, memberItems);
       return { member, memberItems, flatRows, height: MEMBER_ROW_H + contentH };
     });
 
@@ -319,7 +332,7 @@ const GanttChart = forwardRef<GanttChartHandle, Props>(function GanttChart(
       });
     }
     return result;
-  }, [items, activeMembers]);
+  }, [items, activeMembers, collapsedEpics]);
 
   const totalH = sections.reduce((s, sec) => s + effHeight(sec.member.id, sec.height), 0);
 
@@ -475,8 +488,11 @@ const GanttChart = forwardRef<GanttChartHandle, Props>(function GanttChart(
                 if (row.kind === 'epic-header') {
                   return (
                     <div key={`epic-${idx}`}
-                      className="flex items-center gap-1.5 border-b border-gray-100 bg-orange-50/40"
-                      style={{ height: EPIC_HEADER_H, paddingLeft: 8, paddingRight: 8 }}>
+                      className="flex items-center gap-1.5 border-b border-gray-100 bg-orange-50/40 cursor-pointer hover:bg-orange-50/70 transition-colors"
+                      style={{ height: EPIC_HEADER_H, paddingLeft: 8, paddingRight: 8 }}
+                      onClick={() => toggleEpic(row.epicKey)}>
+                      <span className="text-[8px] text-gray-400 flex-shrink-0 transition-transform"
+                        style={{ transform: row.collapsed ? 'rotate(-90deg)' : 'rotate(0deg)' }}>▼</span>
                       <TypeChip type="Epic" />
                       <span className="text-[11px] font-semibold text-gray-600 truncate flex-1">{row.epicName}</span>
                       <span className="text-[10px] text-gray-400 flex-shrink-0">{row.itemCount}건</span>
