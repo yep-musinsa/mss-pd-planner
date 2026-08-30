@@ -77,17 +77,16 @@ export default function AttendanceView({ members, currentEmail, isAdmin = false 
             className="w-8 h-8 rounded-lg border border-gray-200 text-gray-500 hover:bg-gray-50 flex items-center justify-center">
             <ChevronLeft size={16} />
           </button>
-          <span className="text-[15px] font-bold text-gray-800">{rangeLabel}</span>
+          <span className="text-[15px] font-bold text-gray-800 text-center" style={{ minWidth: 170 }}>{rangeLabel}</span>
           <button onClick={() => setWeekStart(w => addWeeks(w, 1))}
             className="w-8 h-8 rounded-lg border border-gray-200 text-gray-500 hover:bg-gray-50 flex items-center justify-center">
             <ChevronRight size={16} />
           </button>
-          {!isThisWeek && (
-            <button onClick={() => setWeekStart(startOfWeek(new Date(), { weekStartsOn: 1 }))}
-              className="text-xs font-semibold text-indigo-500 border border-indigo-200 bg-indigo-50 px-2.5 py-1.5 rounded-md hover:bg-indigo-100">
-              이번 주
-            </button>
-          )}
+          <button onClick={() => setWeekStart(startOfWeek(new Date(), { weekStartsOn: 1 }))}
+            className={`text-xs font-semibold text-indigo-500 border border-indigo-200 bg-indigo-50 px-2.5 py-1.5 rounded-md hover:bg-indigo-100
+              ${isThisWeek ? 'invisible' : ''}`}>
+            이번 주
+          </button>
         </div>
 
         {/* 그리드 */}
