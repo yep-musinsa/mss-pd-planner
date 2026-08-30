@@ -88,6 +88,41 @@ export default {
       }
     }
 
+    // ── 출근 현황 조회 (전체) ──
+    // 저장 구조: { [memberId]: { [YYYY-MM-DD]: 'office' | 'wfh' | 'off' } }
+    if (url.pathname === '/jira-proxy/attendance' && request.method === 'GET') {
+      const data = await env.PD_KV.get('attendance');
+      return new Response(data ?? '{}', {
+        headers: { ...CORS_HEADERS, 'Content-Type': 'application/json' },
+      });
+    }
+
+    // ── 출근 현황 저장 (셀 단위 병합) ──
+    // body: { memberId, date, status }  status 빈 값이면 해당 셀 삭제
+    if (url.pathname === '/jira-proxy/attendance' && request.method === 'POST') {
+      try {
+        const { memberId, date, status } = await request.json();
+        if (!memberId || !date) {
+          return new Response(JSON.stringify({ ok: false, error: 'memberId, date 필수' }), {
+            status: 400, headers: { ...CORS_HEADERS, 'Content-Type': 'application/json' },
+          });
+        }
+        const existing = await env.PD_KV.get('attendance');
+        const all = existing ? JSON.parse(existing) : {};
+        if (!all[memberId]) all[memberId] = {};
+        if (status) all[memberId][date] = status;
+        else delete all[memberId][date];
+        await env.PD_KV.put('attendance', JSON.stringify(all));
+        return new Response(JSON.stringify({ ok: true }), {
+          headers: { ...CORS_HEADERS, 'Content-Type': 'application/json' },
+        });
+      } catch (e) {
+        return new Response(JSON.stringify({ ok: false, error: String(e) }), {
+          status: 500, headers: { ...CORS_HEADERS, 'Content-Type': 'application/json' },
+        });
+      }
+    }
+
     // ── 예정 업무 조회 ──
     if (url.pathname === '/jira-proxy/planned' && request.method === 'GET') {
       const data = await env.PD_KV.get('planned_items');

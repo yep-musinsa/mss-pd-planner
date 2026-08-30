@@ -6,7 +6,7 @@ import {
 import { ko } from 'date-fns/locale';
 import {
   Plus, LayoutDashboard, Calendar,
-  Users, Settings, ChevronDown, Check, X, RefreshCw, LogOut, ScrollText,
+  Users, Settings, ChevronDown, Check, X, RefreshCw, LogOut, ScrollText, Building2,
 } from 'lucide-react';
 import type { GanttItem, Member, ViewMode, JiraSettings } from './types';
 import { MEMBERS } from './data';
@@ -18,6 +18,7 @@ import ItemDetailPanel from './components/ItemDetailPanel';
 import MemberManager from './components/MemberManager';
 import JiraSettingsPanel, { loadJiraSettings, saveJiraSettings } from './components/JiraSettingsPanel';
 import AccessLogView from './components/AccessLogView';
+import AttendanceView from './components/AttendanceView';
 import { useJiraSync } from './hooks/useJiraSync';
 import { useAuth } from './contexts/AuthContext';
 import LoginPage from './components/LoginPage';
@@ -407,8 +408,9 @@ function AppInner({ isAdmin, logout }: { isAdmin: boolean; logout: () => void })
   }
 
   const NAV_ITEMS = [
-    { v: 'dashboard' as ViewMode, label: '대시보드', Icon: LayoutDashboard },
-    { v: 'gantt'     as ViewMode, label: '타임라인',  Icon: Calendar },
+    { v: 'dashboard'  as ViewMode, label: '대시보드', Icon: LayoutDashboard },
+    { v: 'gantt'      as ViewMode, label: '타임라인',  Icon: Calendar },
+    { v: 'attendance' as ViewMode, label: '출근 현황', Icon: Building2 },
     ...(isAdmin ? [{ v: 'members' as ViewMode, label: '팀원', Icon: Users }] : []),
     ...(isAdmin ? [{ v: 'settings' as ViewMode, label: 'Jira 설정', Icon: Settings }] : []),
     ...(isAdmin ? [{ v: 'logs' as ViewMode, label: '접속 로그', Icon: ScrollText }] : []),
@@ -600,6 +602,9 @@ function AppInner({ isAdmin, logout }: { isAdmin: boolean; logout: () => void })
             syncLoading={jiraSyncLoading}
             onReorderMembers={handleMembersChange}
           />
+        )}
+        {view === 'attendance' && (
+          <AttendanceView members={members} currentEmail={user.email} />
         )}
         {view === 'members' && (
           <MemberManager members={members} onChange={handleMembersChange} />

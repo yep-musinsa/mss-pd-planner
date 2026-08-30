@@ -1,6 +1,11 @@
 export type ItemType = 'jira' | 'planned';
 export type ItemStatus = 'todo' | 'in_progress' | 'done' | 'hold';
-export type ViewMode = 'gantt' | 'dashboard' | 'members' | 'settings' | 'logs';
+export type ViewMode = 'gantt' | 'dashboard' | 'attendance' | 'members' | 'settings' | 'logs';
+
+// 출근 현황: office=오피스, wfh=재택, off=휴가, ''=미입력
+export type WorkMode = 'office' | 'wfh' | 'off';
+// { [memberId]: { [YYYY-MM-DD]: WorkMode } }
+export type AttendanceMap = Record<string, Record<string, WorkMode>>;
 
 export interface Member {
   id: string;
