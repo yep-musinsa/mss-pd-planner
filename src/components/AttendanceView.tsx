@@ -63,9 +63,9 @@ export default function AttendanceView({ members, currentEmail, isAdmin = false 
           <h1 className="text-xl font-semibold text-gray-800">출근 현황</h1>
           <p className="text-[12.5px] text-gray-500 mt-0.5">주 2회 재택 · 팀 오피스 출근율은 매일 50% 이상을 유지해야 합니다</p>
         </div>
-        <div className="flex items-center gap-2 bg-white border border-gray-200 rounded-lg px-3 py-1.5 text-[12.5px] text-gray-500 font-medium">
-          <Bell size={13} className="text-gray-400" />
-          슬랙 알림 <span className="text-gray-300">준비 중</span>
+        <div className="flex items-center gap-2 bg-white border border-gray-200 rounded-lg px-3 py-1.5 text-[12.5px] text-gray-600 font-medium">
+          <Bell size={13} className="text-green-500" />
+          슬랙 알림 <span className="text-gray-400">매일 09:00 · 금 17:00</span>
         </div>
       </div>
 
