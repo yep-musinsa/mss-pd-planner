@@ -67,7 +67,7 @@ function buildDailyMessage(attendance, todayKst) {
   }
   const pct = dayRate(attendance, dateStr);
   const warn = pct !== null && pct < 50;
-  const lines = [`*오늘 근무 현황* - 오피스 출근율 *${pct === null ? '-' : pct + '%'}*${warn ? ' ⚠️ 50% 미만' : ''}`];
+  const lines = [`*오늘 근무 현황 - 오피스 출근율 ${pct === null ? '-' : pct + '%'}*${warn ? ' ⚠️ 50% 미만' : ''}`];
   if (office.length) lines.push(`🏢 오피스 - ${office.join(', ')}`);
   if (wfh.length) lines.push(`🏠 재택 - ${wfh.join(', ')}`);
   if (off.length) lines.push(`🌴 휴가 - ${off.join(', ')}`);
