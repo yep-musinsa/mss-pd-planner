@@ -3,9 +3,20 @@ import { Plus, Pencil, Trash2, X, Check, Search, Loader } from 'lucide-react';
 import type { Member } from '../types';
 
 const MEMBER_COLORS = [
-  '#6366f1', '#0ea5e9', '#10b981', '#f59e0b',
-  '#ec4899', '#8b5cf6', '#ef4444', '#14b8a6', '#475569',
-  '#f97316', '#84cc16', '#06b6d4', '#a855f7', '#e11d48',
+  '#6366f1', // indigo
+  '#0ea5e9', // sky
+  '#06b6d4', // cyan
+  '#14b8a6', // teal
+  '#22c55e', // green
+  '#84cc16', // lime
+  '#eab308', // yellow
+  '#f59e0b', // amber
+  '#f97316', // orange
+  '#ef4444', // red
+  '#ec4899', // pink
+  '#d946ef', // fuchsia
+  '#8b5cf6', // violet
+  '#64748b', // slate
 ];
 
 interface Props {
