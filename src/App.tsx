@@ -604,7 +604,7 @@ function AppInner({ isAdmin, logout }: { isAdmin: boolean; logout: () => void })
           />
         )}
         {view === 'attendance' && (
-          <AttendanceView members={members} currentEmail={user.email} />
+          <AttendanceView members={members} currentEmail={user.email} isAdmin={isAdmin} />
         )}
         {view === 'members' && (
           <MemberManager members={members} onChange={handleMembersChange} />

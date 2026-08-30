@@ -16,9 +16,10 @@ const MODE_ORDER: WorkMode[] = ['office', 'wfh', 'off'];
 interface Props {
   members: Member[];
   currentEmail: string;
+  isAdmin?: boolean;
 }
 
-export default function AttendanceView({ members, currentEmail }: Props) {
+export default function AttendanceView({ members, currentEmail, isAdmin = false }: Props) {
   const { attendance, setCell } = useAttendance();
   const [weekStart, setWeekStart] = useState<Date>(() => startOfWeek(new Date(), { weekStartsOn: 1 }));
   const [openCell, setOpenCell] = useState<string | null>(null);
@@ -107,6 +108,7 @@ export default function AttendanceView({ members, currentEmail }: Props) {
           <tbody>
             {activeMembers.map((member, mIdx) => {
               const isMe = member.email.toLowerCase() === currentEmail.toLowerCase();
+              const canEdit = isAdmin || isMe; // 관리자는 전체 수정, 그 외엔 본인만
               const openUp = mIdx >= activeMembers.length - 2; // 마지막 2행은 위로 열기
               return (
                 <tr key={member.id} className="border-b border-gray-100 hover:bg-gray-50/60">
@@ -128,10 +130,10 @@ export default function AttendanceView({ members, currentEmail }: Props) {
                     return (
                       <td key={dk} className="py-1.5 text-center relative">
                         <button
-                          disabled={!isMe}
+                          disabled={!canEdit}
                           onClick={() => setOpenCell(isOpen ? null : cellId)}
                           className={`inline-flex items-center justify-center gap-1.5 rounded-md text-[12.5px] font-bold transition-colors
-                            ${isMe ? 'cursor-pointer' : 'cursor-default'}`}
+                            ${canEdit ? 'cursor-pointer' : 'cursor-default'}`}
                           style={{
                             minWidth: 88, padding: '6px 10px',
                             background: meta.bg,
@@ -139,7 +141,7 @@ export default function AttendanceView({ members, currentEmail }: Props) {
                             border: '1px solid transparent',
                           }}>
                           {meta.label}
-                          {isMe && <span className="text-[9px] opacity-50">▼</span>}
+                          {canEdit && <span className="text-[9px] opacity-50">▼</span>}
                         </button>
 
                         {isOpen && (
@@ -202,7 +204,7 @@ export default function AttendanceView({ members, currentEmail }: Props) {
         <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded-sm" style={{ background: '#dcfce7' }} /> 재택</span>
         <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded-sm" style={{ background: '#ffedd5' }} /> 휴가</span>
         <span className="text-gray-400">· 출근율 = 오피스 ÷ (오피스+재택), 휴가 제외</span>
-        <span className="text-gray-400">· 본인 행만 수정할 수 있어요</span>
+        <span className="text-gray-400">· {isAdmin ? '관리자는 모든 팀원을 수정할 수 있어요' : '본인 행만 수정할 수 있어요'}</span>
       </div>
     </div>
   );
