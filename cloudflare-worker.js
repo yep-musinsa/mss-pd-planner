@@ -229,6 +229,7 @@ export default {
         });
       }
       const type = url.searchParams.get('type') || 'daily';
+      const doSend = url.searchParams.get('send') === '1'; // send=1일 때만 실제 슬랙 발송
       const raw = await env.PD_KV.get('attendance');
       const attendance = raw ? JSON.parse(raw) : {};
       const today = kstDate();
@@ -236,8 +237,8 @@ export default {
         ? buildWeeklyMessage(attendance, today)
         : buildDailyMessage(attendance, today);
       let sent = false;
-      if (text) sent = await sendSlack(env.SLACK_WEBHOOK_URL, text);
-      return new Response(JSON.stringify({ type, sent, skipped: !text, preview: text ?? '(공휴일이라 발송 안 함)' }), {
+      if (doSend && text) sent = await sendSlack(env.SLACK_WEBHOOK_URL, text);
+      return new Response(JSON.stringify({ type, mode: doSend ? 'sent' : 'preview-only', sent, skipped: !text, preview: text ?? '(공휴일이라 발송 안 함)' }), {
         headers: { ...CORS_HEADERS, 'Content-Type': 'application/json' },
       });
     }
