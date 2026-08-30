@@ -88,9 +88,6 @@ export default function AttendanceView({ members, currentEmail, isAdmin = false 
               이번 주
             </button>
           )}
-          <span className="ml-auto text-xs font-semibold text-gray-600 bg-gray-100 px-2.5 py-1.5 rounded-md">
-            코어비즈니스디자인 · {activeMembers.length}명
-          </span>
         </div>
 
         {/* 그리드 */}
@@ -101,10 +98,10 @@ export default function AttendanceView({ members, currentEmail, isAdmin = false 
               {days.map((d, i) => {
                 const holiday = KR_HOLIDAYS[dayKeys[i]];
                 return (
-                  <th key={i} className="py-2.5 text-center border-b border-gray-200">
+                  <th key={i} className="py-2.5 text-center border-b border-gray-200 align-top">
                     <span className={`block text-[11px] font-semibold ${holiday ? 'text-red-400' : 'text-gray-400'}`}>{DAY_LABELS[i]}</span>
                     <span className={`text-[13px] font-bold ${holiday ? 'text-red-500' : 'text-gray-700'}`}>{format(d, 'M/d')}</span>
-                    {holiday && <span className="block text-[9px] text-red-400 font-semibold mt-0.5">{holiday}</span>}
+                    <span className="block text-[9px] text-red-400 font-semibold mt-0.5" style={{ minHeight: 12 }}>{holiday ?? ' '}</span>
                   </th>
                 );
               })}
@@ -201,14 +198,9 @@ export default function AttendanceView({ members, currentEmail, isAdmin = false 
                     ) : r == null ? (
                       <span className="text-sm text-gray-300">—</span>
                     ) : (
-                      <div className="inline-flex flex-col items-center gap-1">
-                        <span className="text-[17px] font-extrabold" style={{ color: warn ? '#ef4444' : '#22c55e' }}>
-                          {r.pct}%
-                        </span>
-                        <span className="block rounded-full overflow-hidden" style={{ width: 54, height: 4, background: '#e5e7eb' }}>
-                          <span className="block h-full rounded-full" style={{ width: `${r.pct}%`, background: warn ? '#ef4444' : '#22c55e' }} />
-                        </span>
-                      </div>
+                      <span className="text-[13px] font-bold" style={{ color: warn ? '#ef4444' : '#22c55e' }}>
+                        {r.pct}%
+                      </span>
                     )}
                   </td>
                 );
