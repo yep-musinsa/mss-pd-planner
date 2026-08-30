@@ -77,7 +77,7 @@ export default function AttendanceView({ members, currentEmail, isAdmin = false 
             className="w-8 h-8 rounded-lg border border-gray-200 text-gray-500 hover:bg-gray-50 flex items-center justify-center">
             <ChevronLeft size={16} />
           </button>
-          <span className="text-[15px] font-bold text-gray-800 text-center" style={{ minWidth: 170 }}>{rangeLabel}</span>
+          <span className="text-[15px] font-bold text-gray-800 text-center" style={{ minWidth: 150 }}>{rangeLabel}</span>
           <button onClick={() => setWeekStart(w => addWeeks(w, 1))}
             className="w-8 h-8 rounded-lg border border-gray-200 text-gray-500 hover:bg-gray-50 flex items-center justify-center">
             <ChevronRight size={16} />
