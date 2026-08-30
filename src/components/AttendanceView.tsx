@@ -3,6 +3,7 @@ import { startOfWeek, addDays, addWeeks, format, isSameWeek } from 'date-fns';
 import { ChevronLeft, ChevronRight, Bell } from 'lucide-react';
 import type { Member, WorkMode } from '../types';
 import { useAttendance } from '../hooks/useAttendance';
+import { KR_HOLIDAYS } from '../data';
 
 const DAY_LABELS = ['월', '화', '수', '목', '금'];
 
@@ -42,6 +43,7 @@ export default function AttendanceView({ members, currentEmail, isAdmin = false 
 
   // 요일별 오피스 출근율 = 오피스 / (오피스 + 재택), 휴가·미입력 제외
   const dayRates = useMemo(() => dayKeys.map(dk => {
+    if (KR_HOLIDAYS[dk]) return 'holiday' as const; // 공휴일은 출근율 제외
     let office = 0, present = 0;
     for (const m of activeMembers) {
       const st = attendance[m.id]?.[dk] ?? 'office'; // 미입력은 오피스로 간주
@@ -96,12 +98,16 @@ export default function AttendanceView({ members, currentEmail, isAdmin = false 
           <thead>
             <tr className="bg-gray-50">
               <th className="text-left pl-4 py-3 text-[11px] font-semibold text-gray-400 uppercase" style={{ width: 160 }}>이름</th>
-              {days.map((d, i) => (
-                <th key={i} className="py-2.5 text-center border-b border-gray-200">
-                  <span className="block text-[11px] text-gray-400 font-semibold">{DAY_LABELS[i]}</span>
-                  <span className="text-[13px] font-bold text-gray-700">{format(d, 'M/d')}</span>
-                </th>
-              ))}
+              {days.map((d, i) => {
+                const holiday = KR_HOLIDAYS[dayKeys[i]];
+                return (
+                  <th key={i} className="py-2.5 text-center border-b border-gray-200">
+                    <span className={`block text-[11px] font-semibold ${holiday ? 'text-red-400' : 'text-gray-400'}`}>{DAY_LABELS[i]}</span>
+                    <span className={`text-[13px] font-bold ${holiday ? 'text-red-500' : 'text-gray-700'}`}>{format(d, 'M/d')}</span>
+                    {holiday && <span className="block text-[9px] text-red-400 font-semibold mt-0.5">{holiday}</span>}
+                  </th>
+                );
+              })}
             </tr>
           </thead>
 
@@ -123,10 +129,22 @@ export default function AttendanceView({ members, currentEmail, isAdmin = false 
                     </div>
                   </td>
                   {dayKeys.map(dk => {
+                    const isHoliday = !!KR_HOLIDAYS[dk];
                     const st = (attendance[member.id]?.[dk] as WorkMode | undefined) ?? 'office';
                     const meta = MODE_META[st];
                     const cellId = `${member.id}::${dk}`;
                     const isOpen = openCell === cellId;
+
+                    if (isHoliday) {
+                      return (
+                        <td key={dk} className="py-1.5 text-center">
+                          <span className="inline-flex items-center justify-center rounded-md text-[12.5px] font-semibold text-gray-400"
+                            style={{ minWidth: 88, padding: '6px 10px', background: '#f3f4f6' }}>
+                            휴일
+                          </span>
+                        </td>
+                      );
+                    }
                     return (
                       <td key={dk} className="py-1.5 text-center relative">
                         <button
@@ -175,10 +193,12 @@ export default function AttendanceView({ members, currentEmail, isAdmin = false 
                 오피스 출근율
               </td>
               {dayRates.map((r, i) => {
-                const warn = r != null && r.pct < 50;
+                const warn = r != null && r !== 'holiday' && r.pct < 50;
                 return (
                   <td key={i} className="py-3 text-center border-t-2 border-gray-200 bg-gray-50">
-                    {r == null ? (
+                    {r === 'holiday' ? (
+                      <span className="text-xs text-gray-300 font-semibold">휴일</span>
+                    ) : r == null ? (
                       <span className="text-sm text-gray-300">—</span>
                     ) : (
                       <div className="inline-flex flex-col items-center gap-1">
