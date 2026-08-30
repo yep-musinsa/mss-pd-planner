@@ -77,7 +77,7 @@ function buildDailyMessage(attendance, todayKst) {
   return lines.join('\n');
 }
 
-// 금요일 17:00 — 다음 주 현황
+// 금요일 17:00 — 다음 주 현황 (요일별 재택/휴가 명단)
 function buildWeeklyMessage(attendance, todayKst) {
   const dow = todayKst.getUTCDay();
   const toMon = ((1 - dow + 7) % 7) || 7; // 다음 주 월요일
@@ -89,10 +89,19 @@ function buildWeeklyMessage(attendance, todayKst) {
     const ds = ymd(d);
     const label = `${DOW_KR[d.getUTCDay()]} ${md(d)}`;
     if (ATT_HOLIDAYS[ds]) { lines.push(`${label} · 🎌 ${ATT_HOLIDAYS[ds]}`); continue; }
+    const wfh = [], off = [];
+    for (const m of ATT_MEMBERS) {
+      const st = attendance[m.id]?.[ds] ?? 'office';
+      if (st === 'wfh') wfh.push(m.name);
+      else if (st === 'off') off.push(m.name);
+    }
+    const parts = [label];
+    if (wfh.length) parts.push(`🏠 재택 - ${wfh.join(', ')}`);
+    if (off.length) parts.push(`🌴 휴가 - ${off.join(', ')}`);
     const pct = dayRate(attendance, ds);
     const warn = pct !== null && pct < 50;
     if (warn) lowDays.push(`${DOW_KR[d.getUTCDay()]}요일`);
-    lines.push(`${label} · ${pct === null ? '-' : pct + '%'}${warn ? ' ⚠️' : ''}`);
+    lines.push(parts.join(' · ') + (warn ? ' ⚠️' : ''));
   }
   if (lowDays.length) lines.push(`\n⚠️ 오피스 출근율 50% 미만: *${lowDays.join(', ')}*`);
   return lines.join('\n');
