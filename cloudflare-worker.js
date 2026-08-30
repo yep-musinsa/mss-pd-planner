@@ -92,13 +92,14 @@ function buildWeeklyMessage(attendance, todayKst) {
       if (st === 'wfh') wfh.push(m.name);
       else if (st === 'off') off.push(m.name);
     }
-    const parts = [label];
-    if (wfh.length) parts.push(`재택 - ${wfh.join(', ')}`);
-    if (off.length) parts.push(`휴가 - ${off.join(', ')}`);
+    const statusParts = [];
+    if (wfh.length) statusParts.push(`재택 - ${wfh.join(', ')}`);
+    if (off.length) statusParts.push(`휴가 - ${off.join(', ')}`);
     const pct = dayRate(attendance, ds);
     const warn = pct !== null && pct < 50;
     if (warn) lowDays.push(`${DOW_KR[d.getUTCDay()]}요일`);
-    lines.push(parts.join(' · ') + (warn ? ' ⚠️' : ''));
+    const body = statusParts.length ? ' · ' + statusParts.join(' / ') : '';
+    lines.push(label + body + (warn ? ' ⚠️' : ''));
   }
   if (lowDays.length) lines.push(`\n⚠️ 오피스 출근율 50% 미만: *${lowDays.join(', ')}*`);
   return lines.join('\n');
