@@ -427,7 +427,7 @@ function AppInner({ isAdmin, logout }: { isAdmin: boolean; logout: () => void })
       <header className="bg-white border-b border-gray-200 sticky top-0 z-30">
         <div className="max-w-full px-6 flex items-center h-14 gap-3">
           <div className="mr-3">
-            <span className="font-bold text-gray-900 text-sm">CBD 리소스 관리</span>
+            <span className="font-bold text-gray-900 text-sm">Core Product Planner</span>
           </div>
 
           <nav className="flex gap-0.5">
