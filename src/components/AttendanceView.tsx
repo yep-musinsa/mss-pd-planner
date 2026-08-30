@@ -91,14 +91,14 @@ export default function AttendanceView({ members, currentEmail, isAdmin = false 
         </div>
 
         {/* 그리드 */}
-        <table className="w-full border-collapse">
+        <table className="w-full border-collapse table-fixed">
           <thead>
             <tr className="bg-gray-50">
               <th className="text-left pl-4 py-3 text-[11px] font-semibold text-gray-400 uppercase" style={{ width: 160 }}>이름</th>
               {days.map((d, i) => {
                 const holiday = KR_HOLIDAYS[dayKeys[i]];
                 return (
-                  <th key={i} className={`py-2 text-center border-b border-gray-200 text-[12px] font-bold ${holiday ? 'text-red-500' : 'text-gray-700'}`}>
+                  <th key={i} className={`py-2 text-center border-b border-gray-200 text-[12px] font-bold whitespace-nowrap ${holiday ? 'text-red-500' : 'text-gray-700'}`}>
                     {format(d, 'M/d')} ({DAY_LABELS[i]}){holiday ? ` ${holiday}` : ''}
                   </th>
                 );
