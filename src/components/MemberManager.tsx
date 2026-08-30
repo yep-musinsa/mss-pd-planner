@@ -5,6 +5,7 @@ import type { Member } from '../types';
 const MEMBER_COLORS = [
   '#6366f1', '#0ea5e9', '#10b981', '#f59e0b',
   '#ec4899', '#8b5cf6', '#ef4444', '#14b8a6', '#475569',
+  '#f97316', '#84cc16', '#06b6d4', '#a855f7', '#e11d48',
 ];
 
 interface Props {
