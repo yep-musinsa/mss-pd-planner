@@ -79,7 +79,7 @@ export default function LoginPage() {
           <div className="w-14 h-14 bg-indigo-500 rounded-2xl flex items-center justify-center mx-auto">
             <span className="text-white font-bold text-2xl">C</span>
           </div>
-          <h1 className="text-xl font-bold text-gray-900">Core Product Planner</h1>
+          <h1 className="text-xl font-bold text-gray-900">CPD Planner</h1>
           <p className="text-sm text-gray-500">무신사 / 29CM 계정으로 로그인하세요</p>
         </div>
 

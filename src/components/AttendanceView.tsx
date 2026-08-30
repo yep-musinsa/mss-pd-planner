@@ -98,10 +98,10 @@ export default function AttendanceView({ members, currentEmail, isAdmin = false 
               {days.map((d, i) => {
                 const holiday = KR_HOLIDAYS[dayKeys[i]];
                 return (
-                  <th key={i} className="py-2.5 text-center border-b border-gray-200 align-top">
-                    <span className={`block text-[11px] font-semibold ${holiday ? 'text-red-400' : 'text-gray-400'}`}>{DAY_LABELS[i]}</span>
+                  <th key={i} className="py-2 text-center border-b border-gray-200">
+                    <span className={`text-[11px] font-semibold mr-1 ${holiday ? 'text-red-400' : 'text-gray-400'}`}>{DAY_LABELS[i]}</span>
                     <span className={`text-[13px] font-bold ${holiday ? 'text-red-500' : 'text-gray-700'}`}>{format(d, 'M/d')}</span>
-                    <span className="block text-[9px] text-red-400 font-semibold mt-0.5" style={{ minHeight: 12 }}>{holiday ?? ' '}</span>
+                    {holiday && <span className="text-[10px] text-red-400 font-semibold ml-1.5">{holiday}</span>}
                   </th>
                 );
               })}
