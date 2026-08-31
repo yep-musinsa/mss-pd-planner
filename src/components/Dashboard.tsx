@@ -546,7 +546,7 @@ export default function Dashboard({ items, members, jiraSettings, onSync, syncLo
             { label: 'TOTAL', val: totalSummary.todo + totalSummary.inProg + totalSummary.done + totalSummary.hold, color: '#1e293b' },
           ].map(s => (
             <div key={s.label} className="flex-1 bg-gray-100" style={{ borderRadius: 4, padding: '12px 16px' }}>
-              <p className="text-[10px] text-gray-400 uppercase tracking-wide mb-1">{s.label}</p>
+              <p className="text-[10px] text-gray-600 uppercase tracking-wide mb-1">{s.label}</p>
               <p className="text-2xl font-normal" style={{ color: s.color }}>{s.val}</p>
             </div>
           ))}
@@ -644,7 +644,7 @@ export default function Dashboard({ items, members, jiraSettings, onSync, syncLo
                 ].map(s => (
                   <div key={s.label} className="flex-1 bg-gray-100" style={{ borderRadius: 4, padding: '10px 12px' }}>
                     <p className="text-[9px] text-gray-600 uppercase tracking-wide leading-none mb-1">{s.label}</p>
-                    <p className="text-base font-normal" style={{ color: s.color }}>{s.val}</p>
+                    <p className="text-lg font-normal" style={{ color: s.color }}>{s.val}</p>
                   </div>
                 ))}
               </div>
