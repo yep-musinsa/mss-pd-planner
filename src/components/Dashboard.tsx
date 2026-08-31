@@ -632,47 +632,47 @@ export default function Dashboard({ items, members, jiraSettings, onSync, syncLo
 
               {/* 상태 요약 */}
               <div className="mt-4">
-              <p className="text-[13px] text-gray-700 font-medium mb-2 leading-none">
+              <p className="text-[13px] text-gray-700 font-normal mb-2 leading-none">
                 Total tasks {ji.length}
                 {noDates.length > 0 && <span className="text-amber-500 ml-1">⚠{noDates.length}</span>}
               </p>
               <div className="flex gap-1.5">
                 {[
-                  { label: 'SUGGESTED', val: ji.filter(i => i.status === 'todo').length,      color: '#1e293b' },
-                  { label: 'IN PROGRESS', val: ji.filter(i => i.status === 'in_progress').length, color: '#6366f1' },
-                  { label: 'DONE',    val: done,                                              color: '#22c55e' },
+                  { label: 'SUGGESTED', val: ji.filter(i => i.status === 'todo').length },
+                  { label: 'IN PROGRESS', val: ji.filter(i => i.status === 'in_progress').length },
+                  { label: 'DONE',    val: done },
                 ].map(s => (
                   <div key={s.label} className="flex-1 bg-gray-100" style={{ borderRadius: 4, padding: '10px 12px' }}>
                     <p className="text-[9px] text-gray-600 uppercase tracking-wide leading-none mb-1">{s.label}</p>
-                    <p className="text-xl font-normal" style={{ color: s.color }}>{s.val}</p>
+                    <p className="text-[16px] font-normal text-gray-900">{s.val}</p>
                   </div>
                 ))}
               </div>
               </div>
 
               {/* 동시 진행 (날짜 겹치는 티켓) */}
-              <div className="mt-3 flex items-center gap-2 text-[11px]"
-                style={{ background: concurBg, borderRadius: 6, padding: '8px 10px' }}>
-                <span className="flex items-center gap-1.5" style={{ color: concurColor ?? '#6b7280' }}>
+              <div className="mt-3 flex items-center gap-2 text-[13px]"
+                style={{ background: concurBg, borderRadius: 6, padding: '9px 11px' }}>
+                <span className="flex items-center gap-1.5" style={{ color: concurColor ?? '#374151' }}>
                   🗂 동시 진행
                   {overlaps.length > 0 ? (
                     <button
                       onClick={e => { e.stopPropagation(); setOverlapModal({ name: member.name, tickets: overlaps }); }}
-                      className="font-bold underline underline-offset-2"
+                      className="font-normal underline underline-offset-2"
                       style={{ color: concurColor ?? '#6366f1' }}>
                       {overlaps.length}건
                     </button>
                   ) : (
-                    <span className="font-semibold text-gray-400">0건</span>
+                    <span className="font-normal text-gray-500">0건</span>
                   )}
                   {overlaps.length > 0 && (
-                    <span className="text-gray-400 font-medium">전체 {totalDated}건 중 {overlapRatio}%</span>
+                    <span className="text-gray-500 font-normal">전체 {totalDated}건 중 {overlapRatio}%</span>
                   )}
                 </span>
                 {peakConcur >= 2 && (
-                  <span className="ml-auto flex items-center gap-1 font-semibold flex-shrink-0"
-                    style={{ color: concurColor ?? '#6b7280' }}>
-                    {concurColor && <AlertTriangle size={11} />}
+                  <span className="ml-auto flex items-center gap-1 font-normal flex-shrink-0"
+                    style={{ color: concurColor ?? '#374151' }}>
+                    {concurColor && <AlertTriangle size={12} />}
                     최대 동시 {peakConcur}개
                   </span>
                 )}
