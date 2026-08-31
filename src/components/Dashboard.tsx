@@ -615,16 +615,16 @@ export default function Dashboard({ items, members, jiraSettings, onSync, syncLo
                   ? <img src={member.avatar} className="w-8 h-8 rounded-full object-cover flex-shrink-0" />
                   : <div className="w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-semibold flex-shrink-0"
                       style={{ background: member.color }}>{member.name[0]}</div>}
-                <p className="text-sm font-semibold text-gray-900 truncate min-w-0">{member.name}</p>
+                <p className="text-[15px] font-semibold text-gray-900 truncate min-w-0">{member.name}</p>
                 <div className="ml-auto text-right flex-shrink-0">
-                  <p className="text-lg font-semibold text-indigo-500 leading-none">{mdPct}%</p>
+                  <p className="text-[15px] font-semibold text-indigo-500 leading-none">{mdPct}%</p>
                 </div>
               </div>
 
               {/* MD 그래프 */}
-              <div className="flex justify-between items-baseline mb-1.5">
-                <span className="text-[15px] text-gray-900 font-normal">{displayMD}md 사용</span>
-                <span className="text-[15px] text-gray-900 font-normal">{Math.max(qAvail - displayMD, 0)}md 잔여</span>
+              <div className="flex justify-between items-baseline mb-2.5">
+                <span className="text-[15px] text-gray-900 font-semibold">{displayMD}md 사용</span>
+                <span className="text-[15px] text-gray-900 font-semibold">{Math.max(qAvail - displayMD, 0)}md 잔여</span>
               </div>
               <div className="h-1.5 bg-gray-100 rounded-full mb-3 overflow-hidden">
                 <div className="h-full rounded-full bg-indigo-500 transition-all" style={{ width: `${mdPct}%` }} />
