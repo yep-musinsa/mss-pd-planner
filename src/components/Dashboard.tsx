@@ -231,6 +231,30 @@ function loadColor(pct: number): string {
   return '#22c55e';                // 여유
 }
 
+// 날짜 기준 부하 티켓 (날짜 있음 + Epic 제외)
+function datedItems(items: GanttItem[]): GanttItem[] {
+  return items.filter(i => !i.noDates && i.issueType !== 'Epic' && i.startDate && i.endDate);
+}
+
+// 최대 동시 진행 = 가장 바쁜 날 동시에 열려 있던 티켓 수
+function calcPeakConcurrency(items: GanttItem[]): number {
+  const dated = datedItems(items);
+  if (dated.length === 0) return 0;
+  const events: [string, number][] = [];
+  for (const i of dated) {
+    events.push([i.startDate, 1]);
+    events.push([i.endDate, -1]);
+  }
+  // 같은 날짜면 +1을 먼저 처리 (마감일=시작일 겹침도 동시로 카운트)
+  events.sort((a, b) => (a[0] === b[0] ? b[1] - a[1] : a[0].localeCompare(b[0])));
+  let cur = 0, peak = 0;
+  for (const [, delta] of events) {
+    cur += delta;
+    if (cur > peak) peak = cur;
+  }
+  return peak;
+}
+
 const STATUS_COLOR: Record<GanttItem['status'], string> = {
   todo: '#94a3b8', in_progress: '#6366f1', done: '#22c55e', hold: '#94a3b8',
 };
@@ -556,6 +580,12 @@ export default function Dashboard({ items, members, jiraSettings, onSync, syncLo
           const isActive = selectedMemberId === member.id;
           const overlaps = calcOverlaps(ji);
           const pctColor = loadColor(mdPct);
+          const totalDated = datedItems(ji).length;
+          const overlapRatio = totalDated > 0 ? Math.round((overlaps.length / totalDated) * 100) : 0;
+          const peakConcur = calcPeakConcurrency(ji);
+          // 경고 강도: 최대 동시 4개+ 빨강, 3개 노랑
+          const concurColor = peakConcur >= 4 ? '#ef4444' : peakConcur >= 3 ? '#f59e0b' : null;
+          const concurBg = peakConcur >= 4 ? '#fef2f2' : peakConcur >= 3 ? '#fffbeb' : '#f9fafb';
 
           return (
             <div key={member.id}
@@ -645,16 +675,30 @@ export default function Dashboard({ items, members, jiraSettings, onSync, syncLo
               </div>
 
               {/* 동시 진행 (날짜 겹치는 티켓) */}
-              <div className="mt-3 pt-3 border-t border-gray-100 flex items-center gap-1.5 text-[11px] text-gray-400">
-                🗂 동시 진행
-                {overlaps.length > 0 ? (
-                  <button
-                    onClick={e => { e.stopPropagation(); setOverlapModal({ name: member.name, tickets: overlaps }); }}
-                    className="text-indigo-500 font-semibold underline underline-offset-2 hover:text-indigo-700">
-                    {overlaps.length}건
-                  </button>
-                ) : (
-                  <span className="font-medium">0건</span>
+              <div className="mt-3 flex items-center gap-2 text-[11px]"
+                style={{ background: concurBg, borderRadius: 6, padding: '8px 10px' }}>
+                <span className="flex items-center gap-1.5" style={{ color: concurColor ?? '#6b7280' }}>
+                  🗂 동시 진행
+                  {overlaps.length > 0 ? (
+                    <button
+                      onClick={e => { e.stopPropagation(); setOverlapModal({ name: member.name, tickets: overlaps }); }}
+                      className="font-bold underline underline-offset-2"
+                      style={{ color: concurColor ?? '#6366f1' }}>
+                      {overlaps.length}건
+                    </button>
+                  ) : (
+                    <span className="font-semibold text-gray-400">0건</span>
+                  )}
+                  {overlaps.length > 0 && (
+                    <span className="text-gray-400 font-medium">전체 {totalDated}건 중 {overlapRatio}%</span>
+                  )}
+                </span>
+                {peakConcur >= 2 && (
+                  <span className="ml-auto flex items-center gap-1 font-semibold flex-shrink-0"
+                    style={{ color: concurColor ?? '#6b7280' }}>
+                    {concurColor && <AlertTriangle size={11} />}
+                    최대 동시 {peakConcur}개
+                  </span>
                 )}
               </div>
             </div>
