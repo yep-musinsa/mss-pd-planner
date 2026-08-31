@@ -304,18 +304,22 @@ export default {
   },
 
   // ── Cron 스케줄 알림 ──
-  // 매일 09:00 KST (00:00 UTC, 월~금):  0 0 * * 1-5
-  // 매주 금 17:00 KST (08:00 UTC, 금):  0 8 * * 5
+  // 요일 판단은 코드가 KST 기준으로 하므로 cron에는 요일을 넣지 않는다.
+  // 매일 알림:  0 0 * * *  (00:00 UTC = 09:00 KST) → 코드가 월~금만 발송
+  // 주간 알림:  0 8 * * *  (08:00 UTC = 17:00 KST) → 코드가 금요일만 발송
   async scheduled(event, env, ctx) {
     const run = async () => {
       const raw = await env.PD_KV.get('attendance');
       const attendance = raw ? JSON.parse(raw) : {};
       const today = kstDate();
+      const dow = today.getUTCDay(); // KST 요일 (0=일 … 6=토)
       let text = null;
-      if (event.cron === '0 8 * * 5') {
-        text = buildWeeklyMessage(attendance, today);
+      if (event.cron === '0 8 * * *') {
+        // 주간: 금요일(5)에만
+        if (dow === 5) text = buildWeeklyMessage(attendance, today);
       } else {
-        text = buildDailyMessage(attendance, today); // 공휴일이면 null → 발송 안 함
+        // 매일: 월~금(1~5)에만, 공휴일이면 buildDailyMessage가 null 반환
+        if (dow >= 1 && dow <= 5) text = buildDailyMessage(attendance, today);
       }
       if (text) await sendSlack(env.SLACK_WEBHOOK_URL, text);
     };
