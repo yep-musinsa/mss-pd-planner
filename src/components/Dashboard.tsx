@@ -362,28 +362,40 @@ export default function Dashboard({ items, members, jiraSettings, onSync, syncLo
   const pct = totalMD > 0 ? Math.min(Math.round((usedMD / totalMD) * 100), 100) : 0;
   const remainMD = Math.max(totalMD - usedMD, 0);
 
-  // 태스크 리스트에 표시할 아이템
+  // 태스크 리스트에 표시할 아이템 (봐야 할 것 먼저 정렬)
   const listItems = useMemo(() => {
+    let result: GanttItem[];
     if (listFilters.length > 0) {
-      const result: GanttItem[] = [];
+      result = [];
       const seen = new Set<string>();
       if (listFilters.includes('overdue')) overdueItems.forEach(i => { if (!seen.has(i.id)) { seen.add(i.id); result.push(i); } });
       if (listFilters.includes('nodate'))  noDatesItems.forEach(i => { if (!seen.has(i.id)) { seen.add(i.id); result.push(i); } });
       if (listFilters.includes('planned')) plannedItems.forEach(i => { if (!seen.has(i.id)) { seen.add(i.id); result.push(i); } });
-      return result;
+    } else {
+      let base = selectedMemberId
+        ? items.filter(i => i.memberId === selectedMemberId)
+        : items;
+      if (selectedQ !== 'all') base = base.filter(i => itemOverlapsQuarter(i, selectedQ));
+      base = base.filter(i => i.status !== 'done'); // DONE 미노출
+      result = base;
     }
 
-    let base = selectedMemberId
-      ? items.filter(i => i.memberId === selectedMemberId)
-      : items;
-
-    if (selectedQ !== 'all') {
-      base = base.filter(i => itemOverlapsQuarter(i, selectedQ));
-    }
-    // DONE 미노출, 일정 미기입+완료도 미노출
-    base = base.filter(i => i.status !== 'done');
-    return base;
-  }, [listFilters, overdueItems, noDatesItems, plannedItems, selectedMemberId, items, selectedQ, filterStatuses]);
+    // 우선순위: 마감 초과(0) → 임박 D-3(1) → 진행 중(2) → 예정 등(3) → Hold(4) → 미기입(5)
+    const prio = (i: GanttItem): number => {
+      if (i.noDates) return 5;
+      if (i.status === 'hold') return 4;
+      if (i.endDate < today) return 0;
+      const dl = differenceInDays(parseISO(i.endDate), parseISO(today));
+      if (dl <= 3) return 1;
+      if (i.status === 'in_progress') return 2;
+      return 3;
+    };
+    return [...result].sort((a, b) => {
+      const d = prio(a) - prio(b);
+      if (d !== 0) return d;
+      return (a.noDates ? '9999' : a.endDate).localeCompare(b.noDates ? '9999' : b.endDate);
+    });
+  }, [listFilters, overdueItems, noDatesItems, plannedItems, selectedMemberId, items, selectedQ, today]);
 
   const selectedMember = activeMembers.find(m => m.id === selectedMemberId) ?? null;
 
@@ -726,6 +738,13 @@ export default function Dashboard({ items, members, jiraSettings, onSync, syncLo
           const member = members.find(m => m.id === item.memberId);
           const md = (item.noDates || item.issueType === 'Epic') ? null : workingDays(item.startDate, item.endDate);
           const isOverdue = !item.noDates && item.status !== 'done' && item.endDate < today;
+          // 마감 D-day 배지 (날짜 있는 미완료만)
+          const daysLeft = (!item.noDates && item.status !== 'done') ? differenceInDays(parseISO(item.endDate), parseISO(today)) : null;
+          const dueBadge = daysLeft === null ? null
+            : daysLeft < 0 ? { txt: `${-daysLeft}일 초과`, cls: 'bg-red-500 text-white' }
+            : daysLeft === 0 ? { txt: '오늘', cls: 'bg-red-500 text-white' }
+            : daysLeft <= 3 ? { txt: `D-${daysLeft}`, cls: 'bg-amber-400 text-white' }
+            : null;
           return (
             <tr key={item.id} className={`border-b border-gray-50 hover:bg-gray-50 transition-colors
               ${item.noDates ? 'bg-amber-50/40' : isOverdue ? 'bg-red-50/30' : ''}`}>
@@ -754,9 +773,11 @@ export default function Dashboard({ items, members, jiraSettings, onSync, syncLo
                 {item.type === 'planned' ? (item.category ?? '예정') : (item.issueType ?? 'Task')}
               </td>
               <td className="px-3 py-2.5 max-w-xs">
-                <div className="flex items-center gap-1">
+                <div className="flex items-center gap-1.5">
+                  {dueBadge && (
+                    <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded flex-shrink-0 ${dueBadge.cls}`}>{dueBadge.txt}</span>
+                  )}
                   {item.noDates && <AlertTriangle size={10} className="text-amber-400 flex-shrink-0" />}
-                  {isOverdue && <AlertTriangle size={10} className="text-red-400 flex-shrink-0" />}
                   <span className="truncate text-gray-800">{item.title}</span>
                 </div>
                 {item.epicName && <span className="text-[10px] text-gray-400 block truncate">{item.epicName}</span>}
