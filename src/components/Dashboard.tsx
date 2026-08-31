@@ -621,7 +621,7 @@ export default function Dashboard({ items, members, jiraSettings, onSync, syncLo
                 <div className="min-w-0">
                   <p className="text-sm font-semibold text-gray-900 truncate">{member.name}</p>
                   <p className="text-[11px] text-gray-400">
-                    {ji.length} tasks
+                    Total tasks {ji.length}
                     {noDates.length > 0 && <span className="text-amber-500 ml-1">⚠{noDates.length}</span>}
                   </p>
                 </div>
@@ -662,12 +662,11 @@ export default function Dashboard({ items, members, jiraSettings, onSync, syncLo
               <p className="text-[9px] text-gray-400 uppercase tracking-wide leading-none mb-2">Tasks</p>
               <div className="flex gap-1.5">
                 {[
-                  { label: 'TOTAL',   val: ji.length,                                          color: '#1e293b' },
-                  { label: 'SUGGESTED', val: ji.filter(i => i.status === 'todo').length,      color: '#64748b' },
+                  { label: 'SUGGESTED', val: ji.filter(i => i.status === 'todo').length,      color: '#1e293b' },
                   { label: 'IN PROGRESS', val: ji.filter(i => i.status === 'in_progress').length, color: '#6366f1' },
                   { label: 'DONE',    val: done,                                              color: '#22c55e' },
                 ].map(s => (
-                  <div key={s.label} className="flex-1 bg-gray-100" style={{ borderRadius: 4, padding: '10px 10px' }}>
+                  <div key={s.label} className="flex-1 bg-gray-100" style={{ borderRadius: 4, padding: '10px 12px' }}>
                     <p className="text-[9px] text-gray-400 uppercase tracking-wide leading-none mb-1">{s.label}</p>
                     <p className="text-xl font-normal" style={{ color: s.color }}>{s.val}</p>
                   </div>
