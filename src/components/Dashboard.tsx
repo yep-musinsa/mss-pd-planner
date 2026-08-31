@@ -580,6 +580,7 @@ export default function Dashboard({ items, members, jiraSettings, onSync, syncLo
           const totalDated = datedItems(ji).length;
           const overlapRatio = totalDated > 0 ? Math.round((overlaps.length / totalDated) * 100) : 0;
           const peakConcur = calcPeakConcurrency(ji);
+          const concurBg = peakConcur >= 4 ? '#fef2f2' : peakConcur >= 3 ? '#fffbeb' : '#f9fafb';
 
           return (
             <div key={member.id}
@@ -649,7 +650,7 @@ export default function Dashboard({ items, members, jiraSettings, onSync, syncLo
 
               {/* 동시 진행 (날짜 겹치는 티켓) */}
               <div className="mt-3 flex items-center gap-2 text-[13px] text-gray-600 border border-gray-100"
-                style={{ background: '#fafafa', borderRadius: 6, padding: '9px 11px' }}>
+                style={{ background: concurBg, borderRadius: 6, padding: '9px 11px' }}>
                 <span className="flex items-center gap-1.5">
                   동시 진행
                   {overlaps.length > 0 ? (
