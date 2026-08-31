@@ -629,8 +629,8 @@ export default function Dashboard({ items, members, jiraSettings, onSync, syncLo
 
               {/* MD 그래프 */}
               <div className="flex justify-between items-baseline mb-1.5">
-                <span className="text-sm text-indigo-400 font-normal">{displayMD}md 사용</span>
-                <span className="text-sm text-gray-400">{Math.max(qAvail - displayMD, 0)}md 잔여</span>
+                <span className="text-[15px] text-gray-900 font-medium">{displayMD}md 사용</span>
+                <span className="text-[15px] text-gray-900 font-medium">{Math.max(qAvail - displayMD, 0)}md 잔여</span>
               </div>
               <div className="h-1.5 bg-gray-100 rounded-full mb-3 overflow-hidden">
                 <div className="h-full rounded-full bg-indigo-500 transition-all" style={{ width: `${mdPct}%` }} />
