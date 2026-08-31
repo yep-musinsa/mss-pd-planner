@@ -2,6 +2,7 @@ import { useMemo, useState, useRef, useEffect } from 'react';
 import { parseISO, addDays, getMonth, getYear, differenceInDays, format, isAfter, isBefore } from 'date-fns';
 import { ExternalLink, AlertTriangle, RefreshCw, ChevronDown, Check } from 'lucide-react';
 import type { GanttItem, Member, JiraSettings } from '../types';
+import { KR_HOLIDAYS } from '../data';
 
 // 브리핑에서 항상 제외 — 이니셔티브/에픽 단위 진행률은 MD 그래프가 이미 다룬다
 const BRIEFING_EXCLUDED_TYPES = new Set(['Epic', 'Initiative']);
@@ -122,6 +123,7 @@ interface Props {
   onReorderMembers: (members: Member[]) => void;
 }
 
+// 근무일 = 주말(토·일) + 공휴일 제외
 function workingDays(startStr: string, endStr: string): number {
   if (!startStr || !endStr) return 0;
   const start = parseISO(startStr);
@@ -130,8 +132,11 @@ function workingDays(startStr: string, endStr: string): number {
   if (total <= 0) return 0;
   let count = 0;
   for (let i = 0; i < total; i++) {
-    const dow = addDays(start, i).getDay();
-    if (dow !== 0 && dow !== 6) count++;
+    const d = addDays(start, i);
+    const dow = d.getDay();
+    if (dow === 0 || dow === 6) continue;      // 주말
+    if (KR_HOLIDAYS[format(d, 'yyyy-MM-dd')]) continue; // 공휴일
+    count++;
   }
   return count;
 }
@@ -188,7 +193,9 @@ function calcQuarterMD(mItems: GanttItem[]): Record<string, number> {
         const d = addDays(clippedStart, i);
         const dow = d.getDay();
         if (dow === 0 || dow === 6) continue; // 주말 제외
-        daySets[q].add(format(d, 'yyyy-MM-dd'));
+        const ds = format(d, 'yyyy-MM-dd');
+        if (KR_HOLIDAYS[ds]) continue;        // 공휴일 제외
+        daySets[q].add(ds);
       }
     }
   }
