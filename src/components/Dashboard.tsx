@@ -649,7 +649,7 @@ export default function Dashboard({ items, members, jiraSettings, onSync, syncLo
               </div>
 
               {/* 동시 진행 (날짜 겹치는 티켓) */}
-              <div className="mt-3 text-[14px] text-gray-700 border border-gray-100 font-normal"
+              <div className="mt-3 text-[13px] text-gray-700 border border-gray-100 font-normal"
                 style={{ background: concurBg, borderRadius: 6, padding: '9px 11px' }}>
                 동시 진행 :{' '}
                 {overlaps.length > 0 ? (
