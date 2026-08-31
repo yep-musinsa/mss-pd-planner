@@ -629,7 +629,7 @@ export default function Dashboard({ items, members, jiraSettings, onSync, syncLo
               </div>
 
               {/* 상태 요약 */}
-              <div className="mt-4">
+              <div className="mt-6">
               <p className="text-[13px] text-gray-700 font-normal mb-2 leading-none">
                 Total tasks {ji.length}
                 {noDates.length > 0 && <span className="text-amber-500 ml-1">⚠{noDates.length}</span>}
@@ -649,27 +649,20 @@ export default function Dashboard({ items, members, jiraSettings, onSync, syncLo
               </div>
 
               {/* 동시 진행 (날짜 겹치는 티켓) */}
-              <div className="mt-3 flex items-center gap-2 text-[13px] text-gray-600 border border-gray-100"
+              <div className="mt-3 text-[14px] text-gray-700 border border-gray-100 font-normal"
                 style={{ background: concurBg, borderRadius: 6, padding: '9px 11px' }}>
-                <span className="flex items-center gap-1.5">
-                  동시 진행
-                  {overlaps.length > 0 ? (
+                동시 진행 :{' '}
+                {overlaps.length > 0 ? (
+                  <>
                     <button
                       onClick={e => { e.stopPropagation(); setOverlapModal({ name: member.name, tickets: overlaps }); }}
-                      className="font-normal underline underline-offset-2 text-gray-600">
+                      className="text-gray-700 underline underline-offset-2">
                       {overlaps.length}건
                     </button>
-                  ) : (
-                    <span className="font-normal text-gray-500">0건</span>
-                  )}
-                  {overlaps.length > 0 && (
-                    <span className="text-gray-500 font-normal">전체 {totalDated}건 중 {overlapRatio}%</span>
-                  )}
-                </span>
-                {peakConcur >= 2 && (
-                  <span className="ml-auto flex items-center gap-1 font-normal flex-shrink-0">
-                    최대 동시 {peakConcur}개
-                  </span>
+                    {' '}(전체 {totalDated}건 중 {overlapRatio}%, 최대 동시 {peakConcur}건)
+                  </>
+                ) : (
+                  <span>0건</span>
                 )}
               </div>
             </div>
