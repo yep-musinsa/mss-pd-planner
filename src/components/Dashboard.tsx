@@ -207,6 +207,30 @@ function itemOverlapsQuarter(item: GanttItem, q: string): boolean {
   return !isAfter(s, qEnd) && !isBefore(e, qStart);
 }
 
+// 날짜가 서로 겹치는 티켓들 (다른 티켓과 최소 1건 겹치면 포함). 시작일 순 정렬.
+function calcOverlaps(items: GanttItem[]): GanttItem[] {
+  const dated = items.filter(i => !i.noDates && i.issueType !== 'Epic' && i.startDate && i.endDate);
+  const overlapping = new Set<string>();
+  for (let a = 0; a < dated.length; a++) {
+    for (let b = a + 1; b < dated.length; b++) {
+      const A = dated[a], B = dated[b];
+      // 문자열(YYYY-MM-DD) 사전순 비교 = 날짜 비교
+      if (A.startDate <= B.endDate && B.startDate <= A.endDate) {
+        overlapping.add(A.id);
+        overlapping.add(B.id);
+      }
+    }
+  }
+  return dated.filter(i => overlapping.has(i.id)).sort((a, b) => a.startDate.localeCompare(b.startDate));
+}
+
+// 부하 색상 (소진율 0~100% 기준)
+function loadColor(pct: number): string {
+  if (pct >= 90) return '#ef4444'; // 거의 참
+  if (pct >= 70) return '#f59e0b'; // 적정
+  return '#22c55e';                // 여유
+}
+
 const STATUS_COLOR: Record<GanttItem['status'], string> = {
   todo: '#94a3b8', in_progress: '#6366f1', done: '#22c55e', hold: '#94a3b8',
 };
@@ -256,6 +280,7 @@ export default function Dashboard({ items, members, jiraSettings, onSync, syncLo
   const defaultQ = quarters.includes(currentQuarter) ? currentQuarter : quarters[0];
   const [selectedQ, setSelectedQ] = useState<string>(defaultQ);
   const [selectedMemberId, setSelectedMemberId] = useState<string | null>(null);
+  const [overlapModal, setOverlapModal] = useState<{ name: string; tickets: GanttItem[] } | null>(null);
   const [listFilters, setListFilters] = useState<ListFilterKey[]>([]);
   const [filterStatuses, setFilterStatuses] = useState<GanttItem['status'][]>(['todo', 'in_progress']);
 
@@ -529,6 +554,8 @@ export default function Dashboard({ items, members, jiraSettings, onSync, syncLo
             : quarterTotalWorkingDays(selectedQ);
           const mdPct = qAvail > 0 ? Math.min(Math.round((displayMD / qAvail) * 100), 100) : 0;
           const isActive = selectedMemberId === member.id;
+          const overlaps = calcOverlaps(ji);
+          const pctColor = loadColor(mdPct);
 
           return (
             <div key={member.id}
@@ -569,7 +596,7 @@ export default function Dashboard({ items, members, jiraSettings, onSync, syncLo
                   </p>
                 </div>
                 <div className="ml-auto text-right flex-shrink-0">
-                  <p className="text-lg text-gray-700 leading-none">{mdPct}%</p>
+                  <p className="text-lg font-semibold leading-none" style={{ color: pctColor }}>{mdPct}%</p>
                 </div>
               </div>
 
@@ -579,7 +606,7 @@ export default function Dashboard({ items, members, jiraSettings, onSync, syncLo
                 <span className="text-sm text-gray-400">{Math.max(qAvail - displayMD, 0)}md 잔여</span>
               </div>
               <div className="h-1.5 bg-gray-100 rounded-full mb-3 overflow-hidden">
-                <div className="h-full rounded-full bg-indigo-500 transition-all" style={{ width: `${mdPct}%` }} />
+                <div className="h-full rounded-full transition-all" style={{ width: `${mdPct}%`, background: pctColor }} />
               </div>
 
               {/* 분기별 MD */}
@@ -615,6 +642,20 @@ export default function Dashboard({ items, members, jiraSettings, onSync, syncLo
                   </div>
                 ))}
               </div>
+              </div>
+
+              {/* 동시 진행 (날짜 겹치는 티켓) */}
+              <div className="mt-3 pt-3 border-t border-gray-100 flex items-center gap-1.5 text-[11px] text-gray-400">
+                🗂 동시 진행
+                {overlaps.length > 0 ? (
+                  <button
+                    onClick={e => { e.stopPropagation(); setOverlapModal({ name: member.name, tickets: overlaps }); }}
+                    className="text-indigo-500 font-semibold underline underline-offset-2 hover:text-indigo-700">
+                    {overlaps.length}건
+                  </button>
+                ) : (
+                  <span className="font-medium">0건</span>
+                )}
               </div>
             </div>
           );
@@ -790,6 +831,40 @@ export default function Dashboard({ items, members, jiraSettings, onSync, syncLo
           </div>
         );
       })()}
+
+      {/* ── 동시 진행 티켓 팝업 ── */}
+      {overlapModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-gray-900/25 p-4"
+          onClick={() => setOverlapModal(null)}>
+          <div className="bg-white rounded-xl shadow-2xl w-full max-w-md overflow-hidden"
+            onClick={e => e.stopPropagation()}>
+            <div className="flex items-center px-4 py-3.5 border-b border-gray-100">
+              <p className="text-sm font-bold text-gray-800">
+                {overlapModal.name} · 동시 진행 티켓
+                <span className="text-gray-400 font-medium text-xs ml-1.5">({overlapModal.tickets.length}건)</span>
+              </p>
+              <button onClick={() => setOverlapModal(null)}
+                className="ml-auto text-gray-400 hover:text-gray-600 text-base leading-none">✕</button>
+            </div>
+            <p className="text-[11.5px] text-gray-500 px-4 pt-2.5 pb-1">날짜가 서로 겹치는 티켓이에요.</p>
+            <div className="max-h-80 overflow-y-auto">
+              {overlapModal.tickets.map(t => (
+                <div key={t.id}
+                  className="flex items-center gap-2.5 px-4 py-2.5 border-t border-gray-100 hover:bg-gray-50 cursor-pointer"
+                  onClick={() => t.jiraUrl && window.open(t.jiraUrl, '_blank', 'noopener')}>
+                  <span className="flex items-center gap-1 text-[11px] font-mono text-blue-500 flex-shrink-0">
+                    {t.jiraKey && <ExternalLink size={10} />}{t.jiraKey ?? ''}
+                  </span>
+                  <span className="text-[12.5px] text-gray-800 flex-1 truncate">{t.title}</span>
+                  <span className="text-[11px] text-gray-400 flex-shrink-0">
+                    {t.startDate.slice(5)}~{t.endDate.slice(5)}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
