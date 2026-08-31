@@ -632,13 +632,10 @@ export default function Dashboard({ items, members, jiraSettings, onSync, syncLo
 
               {/* 상태 요약 */}
               <div className="mt-4">
-              <div className="flex items-center justify-between mb-2">
-                <p className="text-[9px] text-gray-600 uppercase tracking-wide leading-none">Tasks</p>
-                <p className="text-[11px] text-gray-600 leading-none">
-                  Total tasks {ji.length}
-                  {noDates.length > 0 && <span className="text-amber-500 ml-1">⚠{noDates.length}</span>}
-                </p>
-              </div>
+              <p className="text-[13px] text-gray-700 font-medium mb-2 leading-none">
+                Total tasks {ji.length}
+                {noDates.length > 0 && <span className="text-amber-500 ml-1">⚠{noDates.length}</span>}
+              </p>
               <div className="flex gap-1.5">
                 {[
                   { label: 'SUGGESTED', val: ji.filter(i => i.status === 'todo').length,      color: '#1e293b' },
