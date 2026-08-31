@@ -110,7 +110,7 @@ async function sendSlack(webhookUrl, text) {
   const res = await fetch(webhookUrl, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ text }),
+    body: JSON.stringify({ text, username: 'CBP PD 출근봇앱', icon_emoji: ':office:' }),
   });
   return res.ok;
 }
