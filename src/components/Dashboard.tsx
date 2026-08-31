@@ -167,9 +167,12 @@ function quarterRange(label: string): { start: Date; end: Date } {
   };
 }
 
+// 쿼터별 소진 MD = 실제 근무한 날짜(주말 제외)의 합집합.
+// 여러 티켓이 같은 날에 겹쳐도 그 날은 1일로만 계산 (중복 합산 방지).
 function calcQuarterMD(mItems: GanttItem[]): Record<string, number> {
-  const result: Record<string, number> = {};
   const quarters = getCurrentYearQuarters();
+  const daySets: Record<string, Set<string>> = {};
+  for (const q of quarters) daySets[q] = new Set();
   for (const item of mItems) {
     if (item.noDates) continue;
     if (item.issueType === 'Epic') continue;
@@ -180,9 +183,18 @@ function calcQuarterMD(mItems: GanttItem[]): Record<string, number> {
       const clippedStart = itemStart > qStart ? itemStart : qStart;
       const clippedEnd   = itemEnd   < qEnd   ? itemEnd   : qEnd;
       if (clippedStart > clippedEnd) continue;
-      const md = workingDays(format(clippedStart, 'yyyy-MM-dd'), format(clippedEnd, 'yyyy-MM-dd'));
-      if (md > 0) result[q] = (result[q] ?? 0) + md;
+      const total = differenceInDays(clippedEnd, clippedStart) + 1;
+      for (let i = 0; i < total; i++) {
+        const d = addDays(clippedStart, i);
+        const dow = d.getDay();
+        if (dow === 0 || dow === 6) continue; // 주말 제외
+        daySets[q].add(format(d, 'yyyy-MM-dd'));
+      }
     }
+  }
+  const result: Record<string, number> = {};
+  for (const q of quarters) {
+    if (daySets[q].size > 0) result[q] = daySets[q].size;
   }
   return result;
 }
