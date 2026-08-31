@@ -499,7 +499,7 @@ export default function Dashboard({ items, members, jiraSettings, onSync, syncLo
 
       {/* ── 요약 카드 ── */}
       <div>
-        <p className="text-xl text-gray-800 mb-3">팀 리소스 요약</p>
+        <p className="text-xl text-gray-800 mb-3">팀 리소스 현황</p>
       <div className="bg-white border border-gray-200 p-5" style={{ borderRadius: 8 }}>
 
         {/* 분기 탭 + MD 그래프 */}
