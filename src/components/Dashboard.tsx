@@ -231,13 +231,6 @@ function calcOverlaps(items: GanttItem[]): GanttItem[] {
   return dated.filter(i => overlapping.has(i.id)).sort((a, b) => a.startDate.localeCompare(b.startDate));
 }
 
-// 부하 색상 (소진율 0~100% 기준)
-function loadColor(pct: number): string {
-  if (pct >= 90) return '#ef4444'; // 거의 참
-  if (pct >= 70) return '#f59e0b'; // 적정
-  return '#22c55e';                // 여유
-}
-
 // 날짜 기준 부하 티켓 (날짜 있음 + Epic 제외)
 function datedItems(items: GanttItem[]): GanttItem[] {
   return items.filter(i => !i.noDates && i.issueType !== 'Epic' && i.startDate && i.endDate);
@@ -544,15 +537,13 @@ export default function Dashboard({ items, members, jiraSettings, onSync, syncLo
 
         {/* 상태 박스 */}
         <div>
-          <p className="text-[10px] text-gray-400 uppercase tracking-wide mb-2">
-            Total Tasks {totalSummary.todo + totalSummary.inProg + totalSummary.done + totalSummary.hold}
-          </p>
           <div className="flex gap-2">
           {[
             { label: 'SUGGESTED',   val: totalSummary.todo,   color: '#1e293b' },
             { label: 'IN PROGRESS', val: totalSummary.inProg, color: '#6366f1' },
             { label: 'DONE',        val: totalSummary.done,   color: '#22c55e' },
             ...(totalSummary.hold > 0 ? [{ label: 'HOLD', val: totalSummary.hold, color: '#f59e0b' }] : []),
+            { label: 'TOTAL', val: totalSummary.todo + totalSummary.inProg + totalSummary.done + totalSummary.hold, color: '#1e293b' },
           ].map(s => (
             <div key={s.label} className="flex-1 bg-gray-100" style={{ borderRadius: 4, padding: '12px 16px' }}>
               <p className="text-[10px] text-gray-400 uppercase tracking-wide mb-1">{s.label}</p>
@@ -586,7 +577,6 @@ export default function Dashboard({ items, members, jiraSettings, onSync, syncLo
           const mdPct = qAvail > 0 ? Math.min(Math.round((displayMD / qAvail) * 100), 100) : 0;
           const isActive = selectedMemberId === member.id;
           const overlaps = calcOverlaps(ji);
-          const pctColor = loadColor(mdPct);
           const totalDated = datedItems(ji).length;
           const overlapRatio = totalDated > 0 ? Math.round((overlaps.length / totalDated) * 100) : 0;
           const peakConcur = calcPeakConcurrency(ji);
@@ -633,7 +623,7 @@ export default function Dashboard({ items, members, jiraSettings, onSync, syncLo
                   </p>
                 </div>
                 <div className="ml-auto text-right flex-shrink-0">
-                  <p className="text-lg font-semibold leading-none" style={{ color: pctColor }}>{mdPct}%</p>
+                  <p className="text-lg font-semibold text-indigo-500 leading-none">{mdPct}%</p>
                 </div>
               </div>
 
@@ -643,7 +633,7 @@ export default function Dashboard({ items, members, jiraSettings, onSync, syncLo
                 <span className="text-sm text-gray-400">{Math.max(qAvail - displayMD, 0)}md 잔여</span>
               </div>
               <div className="h-1.5 bg-gray-100 rounded-full mb-3 overflow-hidden">
-                <div className="h-full rounded-full transition-all" style={{ width: `${mdPct}%`, background: pctColor }} />
+                <div className="h-full rounded-full bg-indigo-500 transition-all" style={{ width: `${mdPct}%` }} />
               </div>
 
               {/* 상태 요약 */}
