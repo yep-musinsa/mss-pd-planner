@@ -639,24 +639,6 @@ export default function Dashboard({ items, members, jiraSettings, onSync, syncLo
                 <div className="h-full rounded-full transition-all" style={{ width: `${mdPct}%`, background: pctColor }} />
               </div>
 
-              {/* 분기별 MD */}
-              <div className="flex gap-1.5 mb-3 mt-2">
-                {Q_LABEL.map((key, i) => {
-                  const q = quarters[i];
-                  const md = qMD[q] ?? 0;
-                  const avail = Math.round(quarterTotalWorkingDays(q));
-                  return (
-                    <div key={key} className={`flex-1 bg-gray-100 transition-colors ${selectedQ === q ? 'ring-1 ring-indigo-300' : ''}`}
-                      style={{ borderRadius: 4, padding: '8px 10px' }}>
-                      <p className="text-[9px] text-gray-400 uppercase tracking-wide leading-none mb-1">{key}</p>
-                      <p className="text-sm font-normal text-gray-700 leading-none">
-                        {md}<span className="text-gray-400 text-sm">/{avail}</span>
-                      </p>
-                    </div>
-                  );
-                })}
-              </div>
-
               {/* 상태 요약 */}
               <div className="mt-4">
               <p className="text-[9px] text-gray-400 uppercase tracking-wide leading-none mb-2">Tasks</p>
