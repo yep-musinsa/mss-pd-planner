@@ -559,11 +559,13 @@ export default function Dashboard({ items, members, jiraSettings, onSync, syncLo
       <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-3 -mt-4">
         {activeMembers.map(member => {
           const allJi = items.filter(i => i.memberId === member.id && i.type === 'jira' && !i.noDates);
-          const noDates = items.filter(i => i.memberId === member.id && i.noDates);
+          const noDates = items.filter(i => i.memberId === member.id && i.type === 'jira' && i.noDates);
 
           const ji = selectedQ === 'all'
             ? allJi
             : allJi.filter(i => itemOverlapsQuarter(i, selectedQ));
+          // Total = 이번 분기 날짜 있는 티켓 + 미기입(분기 무관) → 미기입은 항상 하위 집합
+          const totalMemberTasks = ji.length + noDates.length;
 
           const done     = ji.filter(i => i.status === 'done').length;
           const doneRate = ji.length > 0 ? Math.round((done / ji.length) * 100) : 0;
@@ -631,7 +633,7 @@ export default function Dashboard({ items, members, jiraSettings, onSync, syncLo
               {/* 상태 요약 */}
               <div className="mt-6">
               <p className="text-[13px] text-gray-700 font-normal mb-2 leading-none">
-                Total tasks {ji.length}
+                Total tasks {totalMemberTasks}
                 {noDates.length > 0 && <span className="text-amber-500 ml-1">⚠{noDates.length}</span>}
               </p>
               <div className="flex gap-1.5">
