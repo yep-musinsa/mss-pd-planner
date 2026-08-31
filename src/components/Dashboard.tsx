@@ -580,9 +580,6 @@ export default function Dashboard({ items, members, jiraSettings, onSync, syncLo
           const totalDated = datedItems(ji).length;
           const overlapRatio = totalDated > 0 ? Math.round((overlaps.length / totalDated) * 100) : 0;
           const peakConcur = calcPeakConcurrency(ji);
-          // 경고 강도: 최대 동시 4개+ 빨강, 3개 노랑
-          const concurColor = peakConcur >= 4 ? '#ef4444' : peakConcur >= 3 ? '#f59e0b' : null;
-          const concurBg = peakConcur >= 4 ? '#fef2f2' : peakConcur >= 3 ? '#fffbeb' : '#f9fafb';
 
           return (
             <div key={member.id}
@@ -651,15 +648,14 @@ export default function Dashboard({ items, members, jiraSettings, onSync, syncLo
               </div>
 
               {/* 동시 진행 (날짜 겹치는 티켓) */}
-              <div className="mt-3 flex items-center gap-2 text-[13px]"
-                style={{ background: concurBg, borderRadius: 6, padding: '9px 11px' }}>
-                <span className="flex items-center gap-1.5" style={{ color: concurColor ?? '#374151' }}>
-                  🗂 동시 진행
+              <div className="mt-3 flex items-center gap-2 text-[13px] text-gray-600 border border-gray-100"
+                style={{ background: '#fafafa', borderRadius: 6, padding: '9px 11px' }}>
+                <span className="flex items-center gap-1.5">
+                  동시 진행
                   {overlaps.length > 0 ? (
                     <button
                       onClick={e => { e.stopPropagation(); setOverlapModal({ name: member.name, tickets: overlaps }); }}
-                      className="font-normal underline underline-offset-2"
-                      style={{ color: concurColor ?? '#6366f1' }}>
+                      className="font-normal underline underline-offset-2 text-gray-600">
                       {overlaps.length}건
                     </button>
                   ) : (
@@ -670,9 +666,7 @@ export default function Dashboard({ items, members, jiraSettings, onSync, syncLo
                   )}
                 </span>
                 {peakConcur >= 2 && (
-                  <span className="ml-auto flex items-center gap-1 font-normal flex-shrink-0"
-                    style={{ color: concurColor ?? '#374151' }}>
-                    {concurColor && <AlertTriangle size={12} />}
+                  <span className="ml-auto flex items-center gap-1 font-normal flex-shrink-0">
                     최대 동시 {peakConcur}개
                   </span>
                 )}
