@@ -559,7 +559,7 @@ export default function Dashboard({ items, members, jiraSettings, onSync, syncLo
       <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-3 -mt-4">
         {activeMembers.map(member => {
           const allJi = items.filter(i => i.memberId === member.id && i.type === 'jira' && !i.noDates);
-          const noDates = items.filter(i => i.memberId === member.id && i.type === 'jira' && i.noDates);
+          const noDates = items.filter(i => i.memberId === member.id && i.type === 'jira' && i.noDates && i.status !== 'done');
 
           const ji = selectedQ === 'all'
             ? allJi
