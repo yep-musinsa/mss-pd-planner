@@ -255,6 +255,51 @@ function calcPeakConcurrency(items: GanttItem[]): number {
   return peak;
 }
 
+// 미니 겹침 타임라인용 데이터 (팝업 내부)
+function typeBarColor(t?: string): string {
+  if (t === 'Design') return '#6366f1';
+  if (t === 'Epic') return '#fb923c';
+  return '#3b82f6'; // Task/기타
+}
+function miniOverlapData(tickets: GanttItem[]) {
+  const dated = tickets.filter(t => t.startDate && t.endDate);
+  if (dated.length === 0) return null;
+  const num = (s: string) => parseISO(s).getTime();
+  const min = Math.min(...dated.map(t => num(t.startDate)));
+  const max = Math.max(...dated.map(t => num(t.endDate)));
+  const span = Math.max(max - min, 1);
+  const pct = (t: number) => ((t - min) / span) * 100;
+  const bars = dated.map(t => ({
+    key: t.jiraKey ?? t.id,
+    left: pct(num(t.startDate)),
+    width: Math.max(pct(num(t.endDate)) - pct(num(t.startDate)), 3),
+    color: typeBarColor(t.issueType),
+  }));
+  // 하루 단위 스윕으로 피크(가장 겹친) 구간 찾기
+  const DAY = 86400000;
+  const days: { d: number; c: number }[] = [];
+  for (let d = min; d <= max; d += DAY) {
+    const c = dated.filter(t => num(t.startDate) <= d && d <= num(t.endDate)).length;
+    days.push({ d, c });
+  }
+  const peak = Math.max(...days.map(x => x.c));
+  let band: { left: number; width: number } | null = null;
+  if (peak >= 2) {
+    let s: number | null = null, best: { s: number; e: number } | null = null;
+    for (let i = 0; i <= days.length; i++) {
+      const isPeak = i < days.length && days[i].c === peak;
+      if (isPeak && s === null) s = i;
+      if (!isPeak && s !== null) {
+        const run = { s, e: i - 1 };
+        if (!best || (run.e - run.s) > (best.e - best.s)) best = run;
+        s = null;
+      }
+    }
+    if (best) band = { left: pct(days[best.s].d), width: Math.max(pct(days[best.e].d) - pct(days[best.s].d), 2) };
+  }
+  return { bars, band, peak, startLabel: format(new Date(min), 'M/d'), endLabel: format(new Date(max), 'M/d') };
+}
+
 const STATUS_COLOR: Record<GanttItem['status'], string> = {
   todo: '#94a3b8', in_progress: '#6366f1', done: '#22c55e', hold: '#94a3b8',
 };
@@ -877,7 +922,36 @@ export default function Dashboard({ items, members, jiraSettings, onSync, syncLo
               <button onClick={() => setOverlapModal(null)}
                 className="ml-auto text-gray-400 hover:text-gray-600 text-base leading-none">✕</button>
             </div>
-            <p className="text-[11.5px] text-gray-500 px-4 pt-2.5 pb-1">날짜가 서로 겹치는 티켓이에요.</p>
+            <p className="text-[11.5px] text-gray-500 px-4 pt-2.5 pb-1">날짜가 서로 겹치는 티켓 — 가장 몰린 구간을 빗금으로 표시</p>
+            {(() => {
+              const mini = miniOverlapData(overlapModal.tickets);
+              if (!mini) return null;
+              const ROW_H = 14;
+              return (
+                <div className="mx-4 mt-1 mb-2 border border-gray-100 rounded-lg p-2.5" style={{ background: '#f9fafb' }}>
+                  <div className="flex justify-between text-[9px] text-gray-400 mb-1 px-0.5">
+                    <span>{mini.startLabel}</span>
+                    {mini.peak >= 2 && <span className="text-red-500 font-semibold">최대 동시 {mini.peak}건</span>}
+                    <span>{mini.endLabel}</span>
+                  </div>
+                  <div className="relative" style={{ height: mini.bars.length * ROW_H }}>
+                    {mini.band && (
+                      <div className="absolute top-0 bottom-0 rounded-sm" style={{
+                        left: `${mini.band.left}%`, width: `${mini.band.width}%`,
+                        background: 'repeating-linear-gradient(45deg, rgba(239,68,68,.12), rgba(239,68,68,.12) 4px, rgba(239,68,68,.24) 4px, rgba(239,68,68,.24) 8px)',
+                        borderLeft: '1px dashed rgba(239,68,68,.5)', borderRight: '1px dashed rgba(239,68,68,.5)',
+                      }} />
+                    )}
+                    {mini.bars.map((b, i) => (
+                      <div key={i} className="absolute rounded-sm text-[8px] text-white px-1 flex items-center overflow-hidden whitespace-nowrap"
+                        style={{ left: `${b.left}%`, width: `${b.width}%`, top: i * ROW_H + 2, height: ROW_H - 4, background: b.color, zIndex: 1 }}>
+                        {b.key}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              );
+            })()}
             <div className="max-h-80 overflow-y-auto">
               {overlapModal.tickets.map(t => (
                 <div key={t.id}
