@@ -6,7 +6,7 @@ export const MEMBERS: Member[] = [
   { id: 'm3', name: '박영은', email: 'ye.park@musinsa.com',       color: '#10b981', active: true, jiraAccountId: '712020:e6c24002-8ccc-4fd1-8ce2-8f8d16efd31d' },
   { id: 'm4', name: '유호재', email: 'hojae.yoo@musinsa.com',     color: '#f59e0b', active: true, jiraAccountId: '712020:52d76173-a3ed-4aa5-b844-c6729bf302a6' },
   { id: 'm5', name: '이미희', email: 'mihee.lee@29cm.co.kr',      color: '#ec4899', active: true, jiraAccountId: '712020:f113f08a-fdf5-423e-b2f5-e68298ab0070' },
-  { id: 'm6', name: '이지향', email: 'scent.lee@29cm.co.kr',      color: '#8b5cf6', active: true, jiraAccountId: '712020:9842fd46-fe95-4bff-a47b-644980525b88' },
+  { id: 'm6', name: '이지향', email: 'scent.lee@musinsa.com',     color: '#8b5cf6', active: true, jiraAccountId: '712020:9842fd46-fe95-4bff-a47b-644980525b88' },
 ];
 
 
