@@ -85,7 +85,7 @@ function buildWeeklyMessage(attendance, todayKst) {
   for (const d of days) {
     const ds = ymd(d);
     const label = `${md(d)}(${DOW_KR[d.getUTCDay()]})`;
-    if (ATT_HOLIDAYS[ds]) { lines.push(`${label} · 🎌 ${ATT_HOLIDAYS[ds]}`); continue; }
+    if (ATT_HOLIDAYS[ds]) { lines.push(`${label} · ${ATT_HOLIDAYS[ds]}`); continue; }
     const wfh = [], off = [];
     for (const m of ATT_MEMBERS) {
       const st = attendance[m.id]?.[ds] ?? 'office';
