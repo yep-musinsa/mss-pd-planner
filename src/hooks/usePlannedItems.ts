@@ -1,8 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import type { GanttItem } from '../types';
+import { IS_LOCAL, apiFetch } from '../lib/api';
 
-const IS_LOCAL = window.location.hostname === 'localhost';
-const WORKER_BASE = 'https://jira-proxy.ye-park.workers.dev';
 const LOCAL_KEY = 'pd-planner-planned';
 
 // 로컬: localStorage / 배포: Worker KV
@@ -11,7 +10,7 @@ async function fetchPlanned(): Promise<GanttItem[]> {
     try { const s = localStorage.getItem(LOCAL_KEY); return s ? JSON.parse(s) : []; } catch { return []; }
   }
   try {
-    const res = await fetch(`${WORKER_BASE}/jira-proxy/planned`);
+    const res = await apiFetch('/planned');
     return res.ok ? await res.json() : [];
   } catch { return []; }
 }
@@ -23,9 +22,8 @@ async function savePlanned(items: GanttItem[]): Promise<void> {
     return;
   }
   try {
-    await fetch(`${WORKER_BASE}/jira-proxy/planned`, {
+    await apiFetch('/planned', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(planned),
     });
   } catch { /* ignore */ }

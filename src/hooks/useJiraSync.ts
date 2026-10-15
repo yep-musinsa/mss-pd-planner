@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import type { GanttItem, JiraSettings, Member } from '../types';
+import { IS_LOCAL, apiFetch } from '../lib/api';
 
 const STATUS_MAP: Record<string, GanttItem['status']> = {
   'To Do': 'todo', '할 일': 'todo', 'Open': 'todo', 'Backlog': 'todo',
@@ -105,11 +106,17 @@ export function buildAssigneeJql(members: Member[]): string {
 }
 
 // ── API 헬퍼 ──────────────────────────────────────────────────
-// localhost: Vite proxy 사용 / 배포: Cloudflare Worker 프록시
-const IS_LOCAL = window.location.hostname === 'localhost';
-const API_BASE = IS_LOCAL
-  ? '/jira-api/rest/api/3'
-  : 'https://jira-proxy.ye-park.workers.dev/jira-proxy/rest/api/3';
+// localhost: Vite proxy로 Jira 직접 호출 (본인 토큰)
+// 배포: Worker 프록시 (세션 토큰으로 인증, Jira 토큰은 Worker에만 있음)
+function searchJql(params: Record<string, string>, authHeader: string): Promise<Response> {
+  const qs = new URLSearchParams(params);
+  if (IS_LOCAL) {
+    return fetch(`/jira-api/rest/api/3/search/jql?${qs}`, {
+      headers: { Authorization: authHeader, Accept: 'application/json' },
+    });
+  }
+  return apiFetch(`/rest/api/3/search/jql?${qs}`, { headers: { Accept: 'application/json' } });
+}
 const DATE_FIELDS = ['summary', 'status', 'assignee', 'issuetype', 'parent',
   'duedate', 'labels', ...START_FIELDS, ...END_FIELDS].join(',');
 
@@ -126,16 +133,17 @@ async function fetchAllIssues(
     const params: Record<string, string> = { jql, maxResults: '100', fields };
     if (nextPageToken) params.nextPageToken = nextPageToken;
 
-    const res = await fetch(`${API_BASE}/search/jql?${new URLSearchParams(params)}`, {
-      headers: { Authorization: authHeader, Accept: 'application/json' },
-    });
+    const res = await searchJql(params, authHeader);
 
-    if (res.status === 401) throw new Error('인증 실패 — 이메일/토큰을 확인해주세요');
+    if (res.status === 401) throw new Error(IS_LOCAL ? '인증 실패 — 이메일/토큰을 확인해주세요' : '로그인이 만료되었습니다 — 다시 로그인해주세요');
     if (res.status === 400) {
       const body = await res.json().catch(() => ({})) as { errorMessages?: string[] };
       throw new Error(`JQL 오류: ${body.errorMessages?.join(', ') ?? 'JQL을 확인해주세요'}\n쿼리: ${jql.slice(0, 100)}`);
     }
-    if (!res.ok) throw new Error(`Jira API 오류 (${res.status})`);
+    if (!res.ok) {
+      const body = await res.json().catch(() => ({})) as { error?: string };
+      throw new Error(body.error ?? `Jira API 오류 (${res.status})`);
+    }
 
     const data = await res.json() as { issues: JiraIssue[]; isLast: boolean; nextPageToken?: string };
     all.push(...data.issues);
