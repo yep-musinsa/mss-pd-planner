@@ -23,25 +23,22 @@ import { useJiraSync } from './hooks/useJiraSync';
 import { useAuth } from './contexts/AuthContext';
 import LoginPage from './components/LoginPage';
 import { usePlannedItems } from './hooks/usePlannedItems';
+import { apiFetch } from './lib/api';
 
 const ITEMS_KEY         = 'pd-planner-items';
 const MEMBERS_KEY       = 'pd-planner-members';
-const PROXY_BASE = window.location.hostname === 'localhost'
-  ? '/jira-proxy'
-  : 'https://jira-proxy.ye-park.workers.dev/jira-proxy';
 
 async function fetchCustomTitles(): Promise<Record<string, string>> {
   try {
-    const res = await fetch(`${PROXY_BASE}/custom-titles`);
+    const res = await apiFetch('/custom-titles');
     return res.ok ? await res.json() : {};
   } catch { return {}; }
 }
 
 async function saveCustomTitlesRemote(titles: Record<string, string>): Promise<void> {
   try {
-    await fetch(`${PROXY_BASE}/custom-titles`, {
+    await apiFetch('/custom-titles', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(titles),
     });
   } catch {}
@@ -620,7 +617,7 @@ function AppInner({ isAdmin, logout }: { isAdmin: boolean; logout: () => void })
           <JiraSettingsPanel members={members} onSyncComplete={handleJiraSyncComplete} />
         )}
         {view === 'logs' && isAdmin && (
-          <AccessLogView email={user.email} />
+          <AccessLogView />
         )}
       </main>
 

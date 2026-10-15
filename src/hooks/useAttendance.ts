@@ -1,9 +1,6 @@
 import { useEffect, useState, useCallback } from 'react';
 import type { AttendanceMap, WorkMode } from '../types';
-
-const PROXY_BASE = window.location.hostname === 'localhost'
-  ? '/jira-proxy'
-  : 'https://jira-proxy.ye-park.workers.dev/jira-proxy';
+import { apiFetch } from '../lib/api';
 
 // 출근 현황을 KV에서 불러오고, 셀 단위로 저장한다.
 export function useAttendance() {
@@ -11,7 +8,7 @@ export function useAttendance() {
   const [loading, setLoading] = useState(true);
 
   const reload = useCallback(() => {
-    fetch(`${PROXY_BASE}/attendance`)
+    apiFetch('/attendance')
       .then(res => res.ok ? res.json() : {})
       .then((data: AttendanceMap) => setAttendance(data ?? {}))
       .catch(() => { /* 조용히 무시 */ })
@@ -20,7 +17,7 @@ export function useAttendance() {
 
   useEffect(() => { reload(); }, [reload]);
 
-  // 한 셀 업데이트 — 낙관적 반영 후 서버 저장
+  // 한 셀 업데이트 — 낙관적 반영 후 서버 저장, 서버가 거절하면 다시 불러와 되돌린다
   const setCell = useCallback((memberId: string, date: string, status: WorkMode | '') => {
     setAttendance(prev => {
       const next: AttendanceMap = { ...prev, [memberId]: { ...(prev[memberId] ?? {}) } };
@@ -28,12 +25,13 @@ export function useAttendance() {
       else delete next[memberId][date];
       return next;
     });
-    fetch(`${PROXY_BASE}/attendance`, {
+    apiFetch('/attendance', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ memberId, date, status }),
-    }).catch(() => { /* 실패 시 다음 reload에서 보정 */ });
-  }, []);
+    })
+      .then(res => { if (!res.ok) reload(); })
+      .catch(() => reload());
+  }, [reload]);
 
   return { attendance, loading, setCell, reload };
 }

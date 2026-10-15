@@ -7,6 +7,11 @@ export default defineConfig({
   plugins: [react()],
   server: {
     proxy: {
+      // 팀 공용 데이터·로그인은 배포된 Worker를 그대로 사용
+      '/jira-proxy': {
+        target: 'https://jira-proxy.ye-park.workers.dev',
+        changeOrigin: true,
+      },
       '/jira-api': {
         target: 'https://musinsa-oneteam.atlassian.net',
         changeOrigin: true,

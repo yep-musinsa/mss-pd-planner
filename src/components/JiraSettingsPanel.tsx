@@ -2,12 +2,11 @@ import { useState, useEffect } from 'react';
 import { RefreshCw, CheckCircle, AlertCircle, Users, Cloud, CloudOff } from 'lucide-react';
 import type { JiraSettings, Member, GanttItem } from '../types';
 import { useJiraSync, buildAssigneeJql } from '../hooks/useJiraSync';
+import { IS_LOCAL, apiFetch } from '../lib/api';
 
 const SETTINGS_KEY = 'pd-planner-jira-settings';
 const DEFAULT_TIER1_JQL = 'labels in ("PD") AND issuetype in ("Initiative", "Epic")';
 
-const IS_LOCAL = window.location.hostname === 'localhost';
-const WORKER_BASE = 'https://jira-proxy.ye-park.workers.dev';
 
 export function loadJiraSettings(): JiraSettings {
   try {
@@ -46,8 +45,8 @@ export default function JiraSettingsPanel({ members, onSyncComplete }: Props) {
   // Worker에 토큰 설정 여부 확인
   useEffect(() => {
     if (IS_LOCAL) return;
-    fetch(`${WORKER_BASE}/jira-proxy/admin/token-status`)
-      .then(r => r.json())
+    apiFetch('/admin/token-status')
+      .then(r => r.ok ? r.json() : { configured: false })
       .then((d: { configured: boolean }) => setWorkerTokenOk(d.configured))
       .catch(() => setWorkerTokenOk(false));
   }, []);
@@ -60,10 +59,9 @@ export default function JiraSettingsPanel({ members, onSyncComplete }: Props) {
       saveJiraSettings(settings);
       // 2. Worker KV에 저장 (모든 사용자가 사용 가능하도록)
       if (!IS_LOCAL) {
-        const res = await fetch(`${WORKER_BASE}/jira-proxy/admin/save-token`, {
+        const res = await apiFetch('/admin/save-token', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ email: 'ye.park@musinsa.com', token: settings.apiToken }),
+          body: JSON.stringify({ email: settings.email || 'ye.park@musinsa.com', token: settings.apiToken }),
         });
         if (res.ok) {
           setWorkerTokenOk(true);

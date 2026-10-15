@@ -44,7 +44,10 @@ export default function LoginPage() {
             alert('무신사(@musinsa.com) 또는 29CM(@29cm.co.kr) 계정으로만 접근 가능합니다.');
             return;
           }
-          login({ email: payload.email, name: payload.name, picture: payload.picture });
+          // 실제 검증(서명·도메인·만료)은 Worker가 한다. 위 도메인 체크는 빠른 안내용.
+          login(response.credential).catch((e: unknown) => {
+            alert(e instanceof Error ? e.message : '로그인에 실패했습니다. 다시 시도해주세요.');
+          });
         },
       });
 

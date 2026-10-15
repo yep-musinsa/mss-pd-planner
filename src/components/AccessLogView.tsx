@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { RefreshCw } from 'lucide-react';
+import { apiFetch } from '../lib/api';
 
 interface LogEntry {
   email: string;
@@ -8,11 +9,8 @@ interface LogEntry {
   ua: string;
 }
 
-const PROXY_BASE = window.location.hostname === 'localhost'
-  ? '/jira-proxy'
-  : 'https://jira-proxy.ye-park.workers.dev/jira-proxy';
 
-export default function AccessLogView({ email }: { email: string }) {
+export default function AccessLogView() {
   const [logs, setLogs] = useState<LogEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -21,7 +19,8 @@ export default function AccessLogView({ email }: { email: string }) {
     setLoading(true);
     setError('');
     try {
-      const res = await fetch(`${PROXY_BASE}/access-log?email=${encodeURIComponent(email)}`);
+      // 어드민 여부는 Worker가 세션으로 판단한다
+      const res = await apiFetch('/access-log');
       if (!res.ok) throw new Error('권한 없음');
       setLogs(await res.json());
     } catch (e) {
